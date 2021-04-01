@@ -1,6 +1,6 @@
 ## Scrape read/gene/saturation data from web_summary.html file from Cellranger
 ## Only works with Cellranger version 3.x and up
-
+'''
 def scrape_saturation_stats(web_summary_html_file):
     import re
     from bs4 import BeautifulSoup
@@ -35,7 +35,24 @@ def scrape_saturation_stats(web_summary_html_file):
     saturations = np.array([float(el) for el in saturations])
 
     return reads, genes, saturations
+'''
 
+def scrape_saturation_stats(web_summary_html_file):
+    from bs4 import BeautifulSoup
+    import re
+    import numpy as np
+    f = open(web_summary_html_file, encoding="utf8")
+    soup = BeautifulSoup(f)
+    for line in soup.find('script'):
+        if 'const data' in line:
+            const_data = line
+    f.close()
+    constant_data = json.loads(const_data[const_data.find('{'):const_data.find('}\n')+1])
+    reads = np.array(constant_data['summary']['analysis_tab']['seq_saturation_plot']['plot']['data'][0]['x'])
+    genes = np.array(constant_data['summary']['analysis_tab']['median_gene_plot']['plot']['data'][0]['y'])
+    saturations = np.array(constant_data['summary']['analysis_tab']['seq_saturation_plot']['plot']['data'][0]['y'])
+    return reads, genes, saturations
+    
 ## Plot saturation curves from read/gene/sat data scraped from web_summary.html file
 #def satcurves(reads, genes, saturations, readmax=250000, title=None):
 def satcurves(web_summary_html_file, readmax=250000, title=None):

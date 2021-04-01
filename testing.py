@@ -3,6 +3,13 @@ sys.path
 sys.path.append('C:/Users/bhbri/AppData/Local/Temp/6e4e7afe/bamdev1/grid/preall/home/bhe/pipelineWork/halfsat')
 import halfSat_webSum
 
+from bs4 import BeautifulSoup
+f = open(foolist[0], encoding="utf8")
+soup = BeautifulSoup(f)
+f.close()
+#print(soup.prettify)
+data = soup.find_all(['script'])[0].text
+#print(data)
 
 def attributeScraper(sample, repooling = False):
     """
@@ -180,3 +187,29 @@ repoolingTable(foolist)
 
 foo = attributeScraper(foolist[0])
 foo.keys()
+
+
+camilaList = ['C:/Users/bhbri/AppData/Local/Temp/6e4e7afe/bamdev1/grid/preall/home/bhe/pipelineWork/halfsat/CC01_1314HRL_web.html',
+               'C:/Users/bhbri/AppData/Local/Temp/6e4e7afe/bamdev1/grid/preall/home/bhe/pipelineWork/halfsat/CC01_451NH_web.html',
+               'C:/Users/bhbri/AppData/Local/Temp/6e4e7afe/bamdev1/grid/preall/home/bhe/pipelineWork/halfsat/CC01_452HR_web.html',
+               'C:/Users/bhbri/AppData/Local/Temp/6e4e7afe/bamdev1/grid/preall/home/bhe/pipelineWork/halfsat/CC01_955H2R_web.html']
+deliveryDocMaker(camilaList)
+
+halfSat_webSum.scrape_saturation_stats('C:/Users/bhbri/AppData/Local/Temp/6e4e7afe/bamdev1/grid/preall/home/bhe/pipelineWork/halfsat/CC01_1314HRL_web.html')
+halfSat_webSum.satcurves('C:/Users/bhbri/AppData/Local/Temp/6e4e7afe/bamdev1/grid/preall/home/bhe/pipelineWork/halfsat/CC01_1314HRL_web.html')
+
+
+# jon new
+import json
+f = open(camilaList[0], encoding="utf8")
+soup = BeautifulSoup(f)
+for line in soup.find('script'):
+    if 'const data' in line:
+        const_data = line
+        print(type(const_data))
+f.close()
+constant_data = json.loads(const_data[const_data.find('{'):const_data.find('}\n')+1])
+constant_data
+seq_summary_table = constant_data['summary']['summary_tab']['sequencing']['table']['rows']
+seq_summary_table
+constant_data['summary']['summary_tab']['sequencing']

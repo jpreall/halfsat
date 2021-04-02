@@ -3,6 +3,12 @@ sys.path
 sys.path.append('C:/Users/bhbri/AppData/Local/Temp/6e4e7afe/bamdev1/grid/preall/home/bhe/pipelineWork/halfsat')
 import halfSat_webSum
 
+camilaList = ['C:/Users/bhbri/AppData/Local/Temp/6e4e7afe/bamdev1/grid/preall/home/bhe/pipelineWork/halfsat/CC01_1314HRL_web.html',
+               'C:/Users/bhbri/AppData/Local/Temp/6e4e7afe/bamdev1/grid/preall/home/bhe/pipelineWork/halfsat/CC01_451NH_web.html',
+               'C:/Users/bhbri/AppData/Local/Temp/6e4e7afe/bamdev1/grid/preall/home/bhe/pipelineWork/halfsat/CC01_452HR_web.html',
+               'C:/Users/bhbri/AppData/Local/Temp/6e4e7afe/bamdev1/grid/preall/home/bhe/pipelineWork/halfsat/CC01_955H2R_web.html']
+
+
 from bs4 import BeautifulSoup
 f = open(foolist[0], encoding="utf8")
 soup = BeautifulSoup(f)

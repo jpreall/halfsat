@@ -37,7 +37,7 @@ cells_summary_table = constant_data['summary']['summary_tab']['cells']['table'][
 cells_summary_table
 
 attributeDict = {}
-def attributeScrapper(html):
+def attributeScraper(html):
     import re
     import json
     from bs4 import BeautifulSoup
@@ -73,7 +73,52 @@ def attributeScrapper(html):
             if entry[0] not in attributeDict:
                 attributeDict[entry[0]] = entry[1]
     return attributeDict
-pd.DataFrame([attributeScrapper(camilaList[0])])
+
+foo = pd.DataFrame([attributeScraper(camilaList[0])])
+foo
+del foo['Sample Description']
+foo.columns[0].lower()
+foo['estimated number of cells']
+def tableGenerator(htmlList, tableType='full', readsDesired=40000):
+    import pandas as pd
+    initial = True
+
+    for sample in htmlList:
+        sample_dict = attributeScraper(sample)
+        # https://stackoverflow.com/questions/57631895/dictionary-to-dataframe-error-if-using-all-scalar-values-you-must-pass-an-ind
+        sample_df = pd.DataFrame([sample_dict])
+        if initial == True:
+            full_df = sample_df
+            initial = False
+        else:
+            full_df = full_df.append(sample_df)
+
+    if tableType == 'full':
+        return full_df
+
+    elif tableType == 'delivery doc':
+        deliveryHeaders = ['sample id', 'estimated number of cells', 'mean reads per cell', 'median genes per cell',
+                           'number of reads', 'sequencing saturation', 'reads mapped to genome', 'reads mapped confidently to genome',
+                           'fraction reads in cells', 'median umi counts per cell']
+        for col in full_df.columns:
+            if col.lower() not in deliveryHeaders:
+                del full_df[col]
+        return full_df
+
+    elif tableType == 'repooling':
+        repoolingHeaders = ['sample id', 'estimated number of cells', 'mean reads per cell', 'number of reads']
+        for col in full_df.columns:
+            if col.lower() not in repoolingHeaders:
+                del full_df[col]
+        full_df.columns = map(str.lower, full_df.columns)
+        full_df['estimated number of cells'] = full_df['estimated number of cells'].str.replace(',', '').astype(int)
+        full_df['mean reads per cell'] = full_df['mean reads per cell'].str.replace(',', '').astype(int)
+        full_df['number of reads'] = full_df['number of reads'].str.replace(',', '').astype(int)
+        full_df['reads needed for ' + str(readsDesired) + ' reads per cell'] = readsDesired - full_df['mean reads per cell']
+        full_df['total reads needed for ' + str(readsDesired) + ' reads per cell'] = full_df['estimated number of cells'] * full_df['reads needed for ' + str(readsDesired) + ' reads per cell']
+        full_df['percent of lane'] = full_df['total reads needed for ' + str(readsDesired) + ' reads per cell'] / sum(full_df['total reads needed for ' + str(readsDesired) + ' reads per cell'])
+        return full_df
+tableGenerator(camilaList, tableType='repooling')
 
 for entry in pipeline_table:
     if entry[0].lower() in 'sample id': #check if it is sample id entry

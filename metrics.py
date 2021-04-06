@@ -2,6 +2,7 @@ import re
 import json
 from bs4 import BeautifulSoup
 import pandas as pd
+import numpy as np
 
 def attributeScraper(html):
     """
@@ -88,8 +89,7 @@ def tableGenerator(htmlList, tableType='full', readsDesired=40000):
 
     if tableType == 'full':
         # delete columns like "Sample Description" if empty/full of NaNs
-        nan_value = float("NaN")
-        full_df.replace("", nan_value, inplace=True)
+        full_df.replace(r'^\s*$', np.nan, inplace=True, regex=True)
         # reference: https://www.jitsejan.com/find-and-delete-empty-columns-pandas-dataframe.html
         empty_cols = [col for col in full_df.columns if full_df[col].isnull().all()]
         full_df.drop(empty_cols, axis=1, inplace=True)

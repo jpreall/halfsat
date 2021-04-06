@@ -2,26 +2,22 @@ import re
 import json
 from bs4 import BeautifulSoup
 import pandas as pd
+import numpy as np
 
 def attributeScraper(html):
     """
-    Use list of cellranger (v4+) count web_summary.html () to generate a table.
+    Generate a dictionary of all attributes and values from a web_summary.html file.
 
-    Use list of web_summary.html to generate a full table of all cellranger count metrics,
-    abbreviated table for data delivery, or a table for repooling purposes.
+    Scrape attributes from cellranger v3-6 web_summary.html to generate a dictionary of
+    attributes and values from all metrics in the json portion of web_summary.html.
 
     Args:
-        htmlList (list): list of web_summary.html directories.
-        tableType (string): string of one of the following: full, data delivery, repooling.
-        readsDesired (int): number of reads per cell desired for repooling.
+        html (str): Path to web_summary.html file of desired experiment/sample.
 
     Returns:
-        pandas DataFrame: DataFrame for table specified.
+        dict: Dictionary of attribute (key) and corresponding value.
 
     Raises:
-        AssertionError: htmlList must be of list type.
-        Exception: For tableType argument, please use one of the following: full, delivery doc, repooling.
-
     """
 
     f = open(html, encoding="utf8")
@@ -92,9 +88,8 @@ def tableGenerator(htmlList, tableType='full', readsDesired=40000):
             full_df = full_df.append(sample_df)
 
     if tableType == 'full':
-        #delete columns like "Sample Description" if empty/full of NaNs
-        nan_value = float("NaN")
-        full_df.replace("", nan_value, inplace=True)
+        # delete columns like "Sample Description" if empty/full of NaNs
+        full_df.replace(r'^\s*$', np.nan, inplace=True, regex=True)
         # reference: https://www.jitsejan.com/find-and-delete-empty-columns-pandas-dataframe.html
         empty_cols = [col for col in full_df.columns if full_df[col].isnull().all()]
         full_df.drop(empty_cols, axis=1, inplace=True)
@@ -103,7 +98,7 @@ def tableGenerator(htmlList, tableType='full', readsDesired=40000):
 
     elif tableType == 'delivery doc':
         deliveryHeaders = ['sample id', 'estimated number of cells', 'mean reads per cell', 'median genes per cell',
-                           'number of reads', 'sequencing saturation', 'reads mapped to genome', 'reads mapped confidently to transcriptome',
+                           'number of reads', 'sequencing saturation', 'reads mapped to genome', 'reads mapped confidently to genome',
                            'fraction reads in cells', 'median umi counts per cell', 'tso_frac']
         for col in full_df.columns:
             if col.lower() not in deliveryHeaders:

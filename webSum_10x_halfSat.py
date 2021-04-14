@@ -40,7 +40,15 @@ def scrape_saturation_stats(web_summary_html_file):
     genes = np.array(constant_data['summary']['analysis_tab']['median_gene_plot']['plot']['data'][0]['y'])
     saturations = np.array(constant_data['summary']['analysis_tab']['seq_saturation_plot']['plot']['data'][0]['y'])
 
-    return reads, genes, saturations, current_sat, sampname
+    cells_table = constant_data['summary']['summary_tab']['cells']['table']['rows']
+    for entry in cells_table:
+        if entry[0] == 'Median Genes per Cell':
+            current_median_genes = entry[1]
+        if entry[0] == 'Mean Reads per Cell':
+            current_mean_reads = entry[1]
+
+
+    return reads, genes, saturations, current_sat, sampname, current_median_genes, current_mean_reads
 
 
 def satcurves(web_summary_html_file, readmax=250000, title=None):
@@ -67,13 +75,13 @@ def satcurves(web_summary_html_file, readmax=250000, title=None):
 
     pl.rcParams['figure.dpi'] = 120
 
-    reads, genes, saturations, current_sat, sampname = scrape_saturation_stats(web_summary_html_file)
+    reads, genes, saturations, current_sat, sampname, current_median_genes, current_mean_reads = scrape_saturation_stats(web_summary_html_file)
     #a is the "kd"
     #b is the max genes per cell, or fraction saturation
     # here b=1
 
     ## initiate the figure
-    fig, ax = pl.subplots(1,2, figsize=[6,2.5])
+    fig, ax = pl.subplots(1,2, figsize=[6.75,2.75])
 
     ## Fit the curves
     ## Step 1: Saturation curve.  b = 1
@@ -102,7 +110,9 @@ def satcurves(web_summary_html_file, readmax=250000, title=None):
     ax[0].axhline(ymax_sat, linestyle='--', color=color_sat)
     ax[0].vlines(x= halfsat_sat, ymin=0, ymax=f(halfsat_sat, halfsat_sat), linestyle=':', color=color_sat)
     ax[0].hlines(y=f(halfsat_sat, halfsat_sat), xmin=0, xmax = halfsat_sat, linestyle=':',color=color_sat)
-    ax[0].text(halfsat_sat + xmax/20,0.4*f(halfsat_sat, halfsat_sat),'1/2 sat:\n' + format(halfsat_sat,',') + ' reads/cell', size=8)
+    ax[0].text(halfsat_sat + xmax/20,0.4*f(halfsat_sat, halfsat_sat),'half-saturation point: \n' + format(halfsat_sat,',') + ' reads/cell', size=8)
+    #ax[0].text(halfsat_sat, f(halfsat_sat, halfsat_sat),'half-saturation point:' + str(halfsat_sat) + ' reads', size=6)
+    ax[0].text(xmax*0.065,ymax_sat*0.05,'current saturation:' + str(current_sat) + ', ' + str(current_mean_reads) +' reads/cell', size=7)
 
     #pl.show()
 
@@ -125,6 +135,8 @@ def satcurves(web_summary_html_file, readmax=250000, title=None):
     popt, pcov = curve_fit(f, reads, genes, p0=[22000,1000])
     halfsat_genes = np.round(popt[0],0).astype('int')
     ymax_genes = np.round(popt[1],0).astype('int')
+    halfsat_genes_counts = np.round(f(halfsat_genes, halfsat_genes, ymax_genes)).astype(int)
+
     #ymax_genes = 1
 
     ## Plot
@@ -142,8 +154,12 @@ def satcurves(web_summary_html_file, readmax=250000, title=None):
     ax[1].axhline(ymax_genes, linestyle='--', color=color_genes)
     ax[1].vlines(x= halfsat_genes, ymin=0, ymax=f(halfsat_genes, halfsat_genes, ymax_genes), linestyle=':', color=color_genes)
     ax[1].hlines(y=f(halfsat_genes, halfsat_genes, ymax_genes), xmin=0, xmax = halfsat_genes, linestyle=':', color=color_genes)
-    ax[1].text(halfsat_genes + xmax/20,0.4*f(halfsat_genes, halfsat_genes, ymax_genes),'1/2 sat: \n' + format(halfsat_genes,',') + ' reads/cell', size=8)
+    ax[1].text(halfsat_genes + xmax/20,0.65*f(halfsat_genes, halfsat_genes, ymax_genes),'half-saturation point: \n' +
+               format(halfsat_genes,',') + ' reads/cell, ' + str(halfsat_genes_counts) + ' genes/cell', size=8)
     ax[1].text(0.1*xmax,ymax_genes*0.9,format(ymax_genes,',') + ' genes max', size=8)
+    ax[1].text(xmax*0.08,ymax_genes*0.05,'current saturation: \n' + str(current_mean_reads) + ' reads/cell, ' +
+               str(current_median_genes) + ' genes/cell', size=7)
+
     #label the axes
     ax[1].set_xlabel('Reads per cell')
     ax[1].set_ylabel('Unique Genes Detected')

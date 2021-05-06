@@ -125,10 +125,10 @@ def satcurves(web_summary_html_file, readmax=250000, title=None, readsDesired=40
     #print('popt:',popt)
     #print('pcov:',pcov)
 
-    print()
+    #print()
     #print('max genes',ymax_sat,'genes')
-    print('half-saturation point:',halfsat_sat,'reads')
-    print('current saturation level:', current_sat)
+    #print('half-saturation point:',halfsat_sat,'reads')
+    #print('current saturation level:', current_sat)
 
     ## Gene saturation curve.
     def f(x, a, b):

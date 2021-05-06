@@ -1,3 +1,12 @@
+from bs4 import BeautifulSoup
+import re
+import json
+import numpy as np
+from scipy.optimize import curve_fit
+import matplotlib.pyplot as pl
+import pandas as pd
+import os
+
 def scrape_saturation_stats(web_summary_html_file):
     """
     Scrape saturation stats from web_summary.html produced by 10x Cellranger.
@@ -16,12 +25,6 @@ def scrape_saturation_stats(web_summary_html_file):
         None.
 
     """
-
-    from bs4 import BeautifulSoup
-    import re
-    import numpy as np
-    import json
-
 
     f = open(web_summary_html_file, encoding="utf8")
     soup = BeautifulSoup(f)
@@ -67,11 +70,6 @@ def satcurves(web_summary_html_file, readmax=250000, title=None):
         None.
 
     """
-
-    import numpy as np
-    from scipy.optimize import curve_fit
-    import matplotlib.pyplot as pl
-    import pandas as pd
 
     pl.rcParams['figure.dpi'] = 120
 
@@ -155,7 +153,7 @@ def satcurves(web_summary_html_file, readmax=250000, title=None):
     ax[1].vlines(x= halfsat_genes, ymin=0, ymax=f(halfsat_genes, halfsat_genes, ymax_genes), linestyle=':', color=color_genes)
     ax[1].hlines(y=f(halfsat_genes, halfsat_genes, ymax_genes), xmin=0, xmax = halfsat_genes, linestyle=':', color=color_genes)
     ax[1].text(halfsat_genes + xmax/20,0.65*f(halfsat_genes, halfsat_genes, ymax_genes),'half-saturation point: \n' +
-               format(halfsat_genes,',') + ' reads/cell, ' + str(halfsat_genes_counts) + ' genes/cell', size=8)
+               format(halfsat_genes,',') + ' reads/cell, ' + format(halfsat_genes_counts, ',') + ' genes/cell', size=8)
     ax[1].text(0.1*xmax,ymax_genes*0.9,format(ymax_genes,',') + ' genes max', size=8)
     ax[1].text(xmax*0.08,ymax_genes*0.05,'current saturation: \n' + str(current_mean_reads) + ' reads/cell, ' +
                str(current_median_genes) + ' genes/cell', size=7)
@@ -190,8 +188,6 @@ def find_satcurves(folder):
         None.
 
     """
-
-    import os
     for root, dirs, files in os.walk(folder):
         for file in files:
             if file.endswith(".html"):

@@ -54,14 +54,15 @@ def scrape_saturation_stats(web_summary_html_file):
     return reads, genes, saturations, current_sat, sampname, current_median_genes, current_mean_reads
 
 
-def satcurves(web_summary_html_file, readmax=250000, title=None):
+def satcurves(web_summary_html_file, readmax=250000, title=None, readsDesired=40000):
     """
     Plot saturation curves from read/gene/sat data scraped from web_summary.html file.
 
     Args:
         web_summary_html_file (string): web_summary.html file to scrape.
         readmax (int): The end of the plot.
-        title (string): THe title  of the plot.
+        title (string): The title  of the plot.
+        readsDesired (int): Mean reads/cell desired.
 
     Returns:
         None.
@@ -188,7 +189,7 @@ def satcurves(web_summary_html_file, readmax=250000, title=None):
     print('Desired reads per cell:', readsDesired)
     print('Sequencing saturation for desired reads per cell:', desiredSeqSat)
     print('Uniques genes per cell for desired reads per cell:', desiredUniqueGenes)
-    
+
 def find_satcurves(folder):
     """
     Walk through a folder of Cellranger outputs to find a bunch of web_summary files and run them all.

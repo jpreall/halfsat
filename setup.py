@@ -7,7 +7,7 @@ VERSION = '0.1.0'
 PACKAGE_NAME = 'halfsat'
 AUTHOR = 'Jonathan Preall and Brian He'
 AUTHOR_EMAIL = 'jpreall@cshl.edu; bhe@cshl.edu'
-URL = 'https://github.com/jpreall/halfsat'
+URL = 'https://github.com/hebrian/halfsat'
 
 LICENSE = 'BSD 3-Clause License'
 DESCRIPTION = 'Scrapes information from web_summary.html. Creates half-sat curves and tables for informational reference.'

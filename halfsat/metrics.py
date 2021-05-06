@@ -21,7 +21,7 @@ def attributeScraper(html):
     """
 
     f = open(html, encoding="utf8")
-    soup = BeautifulSoup(f)
+    soup = BeautifulSoup(f, "html.parser")
     for line in soup.find('script'):
         if 'const data' in line:
             const_data = line

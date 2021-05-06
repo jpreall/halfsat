@@ -27,7 +27,7 @@ def scrape_saturation_stats(web_summary_html_file):
     """
 
     f = open(web_summary_html_file, encoding="utf8")
-    soup = BeautifulSoup(f)
+    soup = BeautifulSoup(f, "html.parser")
     for line in soup.find('script'):
         if 'const data' in line:
             const_data = line
@@ -110,7 +110,7 @@ def satcurves(web_summary_html_file, readmax=250000, title=None):
     ax[0].hlines(y=f(halfsat_sat, halfsat_sat), xmin=0, xmax = halfsat_sat, linestyle=':',color=color_sat)
     ax[0].text(halfsat_sat + xmax/20,0.4*f(halfsat_sat, halfsat_sat),'half-saturation point: \n' + format(halfsat_sat,',') + ' reads/cell', size=8)
     #ax[0].text(halfsat_sat, f(halfsat_sat, halfsat_sat),'half-saturation point:' + str(halfsat_sat) + ' reads', size=6)
-    ax[0].text(xmax*0.065,ymax_sat*0.05,'current saturation:' + str(current_sat) + ', ' + str(current_mean_reads) +' reads/cell', size=7)
+    #ax[0].text(xmax*0.065,ymax_sat*0.05,'current saturation:' + str(current_sat) + ', ' + str(current_mean_reads) +' reads/cell', size=7)
 
     #pl.show()
 
@@ -154,9 +154,9 @@ def satcurves(web_summary_html_file, readmax=250000, title=None):
     ax[1].hlines(y=f(halfsat_genes, halfsat_genes, ymax_genes), xmin=0, xmax = halfsat_genes, linestyle=':', color=color_genes)
     ax[1].text(halfsat_genes + xmax/20,0.65*f(halfsat_genes, halfsat_genes, ymax_genes),'half-saturation point: \n' +
                format(halfsat_genes,',') + ' reads/cell, ' + format(halfsat_genes_counts, ',') + ' genes/cell', size=8)
-    ax[1].text(0.1*xmax,ymax_genes*0.9,format(ymax_genes,',') + ' genes max', size=8)
-    ax[1].text(xmax*0.08,ymax_genes*0.05,'current saturation: \n' + str(current_mean_reads) + ' reads/cell, ' +
-               str(current_median_genes) + ' genes/cell', size=7)
+    ax[1].text(0.1*xmax,ymax_genes*1.01,format(ymax_genes,',') + ' genes max', size=8)
+    #ax[1].text(xmax*0.08,ymax_genes*0.05,'current saturation: \n' + str(current_mean_reads) + ' reads/cell, ' +
+    #           str(current_median_genes) + ' genes/cell', size=7)
 
     #label the axes
     ax[1].set_xlabel('Reads per cell')
@@ -173,6 +173,13 @@ def satcurves(web_summary_html_file, readmax=250000, title=None):
     pl.show()
     #print('popt:',popt)
     #print('pcov:',pcov)
+
+    print()
+    #print('max genes',ymax_sat,'genes')
+    print('Sequencing saturation half-saturation point:',format(halfsat_sat, ','),'reads')
+    print('Current sequencing saturation level:', current_sat)
+    print('Current reads per cell:', current_mean_reads)
+    print('Current genes per cell:', format(halfsat_genes_counts, ','))
 
 def find_satcurves(folder):
     """

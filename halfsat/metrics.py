@@ -70,7 +70,7 @@ def tableGenerator(htmlList, tableType='full', readsDesired=40000):
     Raises:
         AssertionError: htmlList must be of list type.
         Exception: For tableType argument, please use one of the following: full, delivery doc, repooling.
-
+        AssertionError: readsDesired must be higher than the mean reads/cell of each sample being repooled.
     """
 
     assert isinstance(htmlList, list), "Please input a list of html directories"
@@ -114,6 +114,7 @@ def tableGenerator(htmlList, tableType='full', readsDesired=40000):
         full_df.columns = map(str.lower, full_df.columns)
         full_df['estimated number of cells'] = full_df['estimated number of cells'].str.replace(',', '').astype(int)
         full_df['mean reads per cell'] = full_df['mean reads per cell'].str.replace(',', '').astype(int)
+        assert full_df['mean reads per cell'].max() < readsDesired, "Unable to repool if readsDesired is lower than mean reads/cell of one of the considered samples"
         full_df['number of reads'] = full_df['number of reads'].str.replace(',', '').astype(int)
         full_df['reads needed for ' + str(readsDesired) + ' reads per cell'] = readsDesired - full_df['mean reads per cell']
         full_df['total reads needed for ' + str(readsDesired) + ' reads per cell'] = full_df['estimated number of cells'] * full_df['reads needed for ' + str(readsDesired) + ' reads per cell']

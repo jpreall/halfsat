@@ -91,6 +91,9 @@ def satcurves(web_summary_html_file, readmax=250000, title=None):
     #ymax = np.round(popt[1],0).astype('int')
     ymax_sat = 1
 
+    assert readsDesired > 0, "Cannot have negative mean reads/cell"
+    desiredSeqSat = np.round(f(readsDesired, halfsat_sat),3)
+
     ## Plot
     ax[0].scatter(reads, saturations)
     ax[0].plot(reads, f(reads, *popt), 'r-')
@@ -135,6 +138,7 @@ def satcurves(web_summary_html_file, readmax=250000, title=None):
     ymax_genes = np.round(popt[1],0).astype('int')
     halfsat_genes_counts = np.round(f(halfsat_genes, halfsat_genes, ymax_genes)).astype(int)
 
+    desiredUniqueGenes = np.round(f(readsDesired, halfsat_genes, ymax_genes)).astype(int)
     #ymax_genes = 1
 
     ## Plot
@@ -179,8 +183,12 @@ def satcurves(web_summary_html_file, readmax=250000, title=None):
     print('Sequencing saturation half-saturation point:',format(halfsat_sat, ','),'reads')
     print('Current sequencing saturation level:', current_sat)
     print('Current reads per cell:', current_mean_reads)
-    print('Current genes per cell:', format(halfsat_genes_counts, ','))
-
+    print('Current genes per cell:', current_median_genes)
+    print()
+    print('Desired reads per cell:', readsDesired)
+    print('Sequencing saturation for desired reads per cell:', desiredSeqSat)
+    print('Uniques genes per cell for desired reads per cell:', desiredUniqueGenes)
+    
 def find_satcurves(folder):
     """
     Walk through a folder of Cellranger outputs to find a bunch of web_summary files and run them all.

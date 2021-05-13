@@ -82,6 +82,10 @@ def satcurves(web_summary_html_file, readmax=250000, title=None, readsDesired=40
     ## initiate the figure
     fig, ax = pl.subplots(1,2, figsize=[6.75,2.75])
 
+    # constraining to only 3 bins in x-axis for visiblity purposes
+    ax[0].locator_params(axis='x', nbins=3)
+    ax[1].locator_params(axis='x', nbins=3)
+
     ## Fit the curves
     ## Step 1: Saturation curve.  b = 1
     def f(x, a):
@@ -163,6 +167,7 @@ def satcurves(web_summary_html_file, readmax=250000, title=None, readsDesired=40
     #ax[1].text(xmax*0.08,ymax_genes*0.05,'current saturation: \n' + str(current_mean_reads) + ' reads/cell, ' +
     #           str(current_median_genes) + ' genes/cell', size=7)
 
+
     #label the axes
     ax[1].set_xlabel('Reads per cell')
     ax[1].set_ylabel('Unique Genes Detected')
@@ -181,14 +186,14 @@ def satcurves(web_summary_html_file, readmax=250000, title=None, readsDesired=40
 
     print()
     #print('max genes',ymax_sat,'genes')
-    print('Sequencing saturation half-saturation point:',format(halfsat_sat, ','),'reads')
+    print('Sequencing saturation half-saturation pointttttttttttttttttt:',format(halfsat_sat, ','),'reads')
     print('Current sequencing saturation level:', current_sat)
     print('Current reads per cell:', current_mean_reads)
     print('Current genes per cell:', current_median_genes)
     print()
-    print('Desired reads per cell:', readsDesired)
-    print('Sequencing saturation for desired reads per cell:', desiredSeqSat)
-    print('Uniques genes per cell for desired reads per cell:', desiredUniqueGenes)
+    print('Desired reads per cell:', format(readsDesired, ','))
+    print('Sequencing saturation for desired reads per cell:', "{:.1%}".format(desiredSeqSat))
+    print('Uniques genes per cell for desired reads per cell:', format(desiredUniqueGenes, ','))
 
 def find_satcurves(folder):
     """

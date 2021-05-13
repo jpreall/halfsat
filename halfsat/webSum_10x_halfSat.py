@@ -186,7 +186,7 @@ def satcurves(web_summary_html_file, readmax=250000, title=None, readsDesired=40
 
     print()
     #print('max genes',ymax_sat,'genes')
-    print('Sequencing saturation half-saturation pointttttttttttttttttt:',format(halfsat_sat, ','),'reads')
+    print('Sequencing saturation half-saturation point:',format(halfsat_sat, ','),'reads')
     print('Current sequencing saturation level:', current_sat)
     print('Current reads per cell:', current_mean_reads)
     print('Current genes per cell:', current_median_genes)

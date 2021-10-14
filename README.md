@@ -25,7 +25,8 @@ additional parameter of 'readsDesired', which is used in the repooling calculati
 ### Import and load file path
 ```
 from halfsat import webSum_10x_halfSat, metrics
-web_summary_list = ['500_PBMC_3p_LT_Chromium_X_web_summary.html']
+web_summary_list = ['10k_PBMC_3p_nextgem_Chromium_X_web_summary.html',
+                    '500_PBMC_3p_LT_Chromium_X_web_summary.html']
 ```
 
 ### 1. metrics

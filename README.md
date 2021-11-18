@@ -1,7 +1,7 @@
 ## Overview
 Creates halfsat curves as reference for additional sequencing. Scrapes web_summary.html
 to obtain reference information for different tables. The package contains two main files,
-'webSum_10x_halfSat' and 'metrics'.
+'webSum_10x_halfSat' and 'metrics'
 
 **webSum_10x_halfSat** will take in a web_summary.html file and output half-saturation plots
 and relevant information such as sequencing saturation half-sat point, current sequencing

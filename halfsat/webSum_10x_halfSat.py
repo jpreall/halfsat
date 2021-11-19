@@ -7,12 +7,14 @@ import matplotlib.pyplot as pl
 import pandas as pd
 import os
 
-def scrape_saturation_stats(web_summary_html_file):
+
+def scrape_saturation_stats(web_summary_html_file, webSummaryType='GEX'):
     """
     Scrape saturation stats from web_summary.html produced by 10x Cellranger.
     Only works with Cellranger version 3.x and up.
     Args:
         web_summary_html_file (string): web_summary.html file to scrape.
+        webType (string): either 'GEX' or 'ARC' based on Cellranger pipeline used
 
     Returns:
         list of int: The number of reads for each point of seq_saturation_plot.
@@ -22,7 +24,7 @@ def scrape_saturation_stats(web_summary_html_file):
         string: The sample name.
 
     Raises:
-        None.
+        ValueError: when neither 'GEX' nor 'ARC' is supplied
 
     """
 
@@ -35,26 +37,90 @@ def scrape_saturation_stats(web_summary_html_file):
 
     constant_data = json.loads(const_data[const_data.find('{'):const_data.find('}\n')+1])
 
-    seq_summary_table = constant_data['summary']['summary_tab']['sequencing']['table']['rows']
-    current_sat = [name for name in seq_summary_table if 'Sequencing Saturation' in name][0][1]
-    sampname = constant_data['summary']['sample']['id']
+    if webSummaryType == 'GEX':
+        try:
+            seq_summary_table = constant_data['summary']['summary_tab']['sequencing']['table']['rows']
+            current_sat = [
+                name for name in seq_summary_table if 'Sequencing Saturation' in name][0][1]
+            sampname = constant_data['summary']['sample']['id']
+        except KeyError:
+            print('check if GEX web summary html file because attributes not found')
+            raise
 
-    reads = np.array(constant_data['summary']['analysis_tab']['seq_saturation_plot']['plot']['data'][0]['x'])
-    genes = np.array(constant_data['summary']['analysis_tab']['median_gene_plot']['plot']['data'][0]['y'])
-    saturations = np.array(constant_data['summary']['analysis_tab']['seq_saturation_plot']['plot']['data'][0]['y'])
+        reads = np.array(constant_data['summary']['analysis_tab']
+                         ['seq_saturation_plot']['plot']['data'][0]['x'])
+        genes = np.array(constant_data['summary']['analysis_tab']
+                         ['median_gene_plot']['plot']['data'][0]['y'])
+        saturations = np.array(constant_data['summary']['analysis_tab']
+                               ['seq_saturation_plot']['plot']['data'][0]['y'])
 
-    cells_table = constant_data['summary']['summary_tab']['cells']['table']['rows']
-    for entry in cells_table:
-        if entry[0] == 'Median Genes per Cell':
-            current_median_genes = entry[1]
-        if entry[0] == 'Mean Reads per Cell':
-            current_mean_reads = entry[1]
+        cells_table = constant_data['summary']['summary_tab']['cells']['table']['rows']
+        for entry in cells_table:
+            if entry[0] == 'Median Genes per Cell':
+                current_median_genes = entry[1]
+            if entry[0] == 'Mean Reads per Cell':
+                current_mean_reads = entry[1]
+        return reads, genes, saturations, current_sat, sampname, current_median_genes, current_mean_reads
+
+    elif webSummaryType == 'ARC':
+        try:
+            sampleName = constant_data['sample']['id']
+        except KeyError:
+            print('check if ARC web summary html file because attributes not found')
+            raise
+
+        meanReadPairsArray = constant_data['atac_seq_saturation_plot']['data'][0]['x']
+        medianUniqFragArray = constant_data['atac_seq_saturation_plot']['data'][0]['y']
+        gex_percentDupArray = constant_data['gex_seq_saturation_plot']['data'][0]['y']
+        gex_meanReadsArray = constant_data['gex_seq_saturation_plot']['data'][0]['x']
+        gex_medianGenesArray = constant_data['gex_genes_per_cell_plot']['data'][0]['y']
+
+        gex_cells_table = constant_data['gex_cells_table']['rows']
+        for entry in gex_cells_table:
+            if entry[0] == 'Mean raw reads per cell':
+                current_mean_raw_reads_gex = entry[1]
+            if entry[0] == 'Median genes per cell':
+                current_median_genes = entry[1]
+
+        gex_sequencing_table = constant_data['gex_sequencing_table']['rows']
+        for entry in gex_sequencing_table:
+            if entry[0] == 'Percent duplicates':
+                gex_percentDup = entry[1]
+
+        atac_cells_table = constant_data['atac_cells_table']['rows']
+        for entry in atac_cells_table:
+            if entry[0] == 'Mean raw read pairs per cell':
+                current_mean_raw_reads_atac = entry[1]
+            if entry[0] == 'Median high-quality fragments per cell':
+                current_median_frags = entry[1]
+
+        atac_sequencing_table = constant_data['atac_sequencing_table']['rows']
+        for entry in atac_sequencing_table:
+            if entry[0] == 'Percent duplicates':
+                atac_percentDup = entry[1]
+
+        arc_dictionary = {'atac_dictionary': {'sample name': sampleName,
+                          'percent duplicates': atac_percentDup,
+                                              'mean read pairs array': meanReadPairsArray,
+                                              'median unique fragments array': medianUniqFragArray,
+                                              'current mean raw reads': current_mean_raw_reads_atac,
+                                              'current median fragments': current_median_frags},
+                          'gex_dictionary': {'sample name': sampleName,
+                                             'percent duplicates': gex_percentDup,
+                                             'percent duplicates array': gex_percentDupArray,
+                                             'mean reads array': gex_meanReadsArray,
+                                             'median genes array': gex_medianGenesArray,
+                                             'current mean raw reads': current_mean_raw_reads_gex,
+                                             'current median genes': current_median_genes}
+                          }
+
+        return arc_dictionary
+
+    else:
+        raise ValueError('webSummaryType neither GEX nor ARC')
 
 
-    return reads, genes, saturations, current_sat, sampname, current_median_genes, current_mean_reads
-
-
-def satcurves(web_summary_html_file, readmax=250000, title=None, readsDesired=40000):
+def satcurves(web_summary_html_file, webSummaryType='GEX', readmax=150000, title=None, readsDesired=40000):
     """
     Plot saturation curves from read/gene/sat data scraped from web_summary.html file.
 
@@ -74,105 +140,124 @@ def satcurves(web_summary_html_file, readmax=250000, title=None, readsDesired=40
 
     pl.rcParams['figure.dpi'] = 120
 
-    reads, genes, saturations, current_sat, sampname, current_median_genes, current_mean_reads = scrape_saturation_stats(web_summary_html_file)
-    #a is the "kd"
-    #b is the max genes per cell, or fraction saturation
+    if webSummaryType == 'GEX':
+        reads, genes, saturations, current_sat, sampname, current_median_genes, current_mean_reads = scrape_saturation_stats(
+            web_summary_html_file, webSummaryType='GEX')
+    elif webSummaryType == 'ARC':
+        arc_dictionary = scrape_saturation_stats(
+            web_summary_html_file, webSummaryType='ARC')
+        reads = np.array(arc_dictionary['gex_dictionary']['mean reads array'])
+        genes = np.array(arc_dictionary['gex_dictionary']['median genes array'])
+        saturations = np.array(arc_dictionary['gex_dictionary']['percent duplicates array'])
+        current_sat = arc_dictionary['gex_dictionary']['percent duplicates']
+        sampname = arc_dictionary['gex_dictionary']['sample name']
+        current_median_genes = arc_dictionary['gex_dictionary']['current median genes']
+        current_mean_reads = arc_dictionary['gex_dictionary']['current mean raw reads']
+    else:
+        raise ValueError('webSummaryType neither GEX nor ARC')
+
+    # a is the "kd"
+    # b is the max genes per cell, or fraction saturation
     # here b=1
 
-    ## initiate the figure
-    fig, ax = pl.subplots(1,2, figsize=[6.75,2.75])
+    # initiate the figure
+    fig, ax = pl.subplots(1, 2, figsize=[6.75, 2.75])
 
     # constraining to only 3 bins in x-axis for visiblity purposes
-    ax[0].locator_params(axis='x', nbins=3)
-    ax[1].locator_params(axis='x', nbins=3)
+    ax[0].locator_params(axis='x', nbins=4)
+    ax[1].locator_params(axis='x', nbins=4)
 
-    ## Fit the curves
-    ## Step 1: Saturation curve.  b = 1
+    # Fit the curves
+    # Step 1: Saturation curve.  b = 1
     def f(x, a):
-        return(x /(x+a))
+        return(x / (x+a))
 
     popt, pcov = curve_fit(f, reads, saturations)
-    halfsat_sat = np.round(popt[0],0).astype('int')
+    halfsat_sat = np.round(popt[0], 0).astype('int')
     #ymax = np.round(popt[1],0).astype('int')
     ymax_sat = 1
 
     assert readsDesired > 0, "Cannot have negative mean reads/cell"
-    desiredSeqSat = np.round(f(readsDesired, halfsat_sat),3)
+    desiredSeqSat = np.round(f(readsDesired, halfsat_sat), 3)
 
-    ## Plot
+    # Plot
     ax[0].scatter(reads, saturations)
     ax[0].plot(reads, f(reads, *popt), 'r-')
 
     # extrapolate with the curve fit
-    x_more = np.linspace(0,readmax, 100)
+    x_more = np.linspace(0, readmax, 100)
     xmax = np.max(x_more)
     ax[0].plot(x_more, f(x_more, *popt), 'k-')
 
     #pl.text(0.1*xmax,ymax*0.9,str(ymax) + ' genes', size=8)
 
     # set plot boundaries and add asymptotes and lines
-    color_sat='purple'
-    ax[0].set_ylim(0,1.1)
+    color_sat = 'purple'
+    ax[0].set_ylim(0, 1.1)
     ax[0].axhline(ymax_sat, linestyle='--', color=color_sat)
-    ax[0].vlines(x= halfsat_sat, ymin=0, ymax=f(halfsat_sat, halfsat_sat), linestyle=':', color=color_sat)
-    ax[0].hlines(y=f(halfsat_sat, halfsat_sat), xmin=0, xmax = halfsat_sat, linestyle=':',color=color_sat)
-    ax[0].text(halfsat_sat + xmax/20,0.4*f(halfsat_sat, halfsat_sat),'half-saturation point: \n' + format(halfsat_sat,',') + ' reads/cell', size=8)
+    ax[0].vlines(x=halfsat_sat, ymin=0, ymax=f(
+        halfsat_sat, halfsat_sat), linestyle=':', color=color_sat)
+    ax[0].hlines(y=f(halfsat_sat, halfsat_sat), xmin=0,
+                 xmax=halfsat_sat, linestyle=':', color=color_sat)
+    ax[0].text(halfsat_sat + xmax/20, 0.4*f(halfsat_sat, halfsat_sat),
+               'half-saturation point: \n' + format(halfsat_sat, ',') + ' reads/cell', size=8)
     #ax[0].text(halfsat_sat, f(halfsat_sat, halfsat_sat),'half-saturation point:' + str(halfsat_sat) + ' reads', size=6)
     #ax[0].text(xmax*0.065,ymax_sat*0.05,'current saturation:' + str(current_sat) + ', ' + str(current_mean_reads) +' reads/cell', size=7)
 
-    #pl.show()
+    # pl.show()
 
-    #label the axes
+    # label the axes
     ax[0].set_xlabel('Reads per cell')
     ax[0].set_ylabel('Sequencing Saturations')
 
-    #print('popt:',popt)
-    #print('pcov:',pcov)
+    # print('popt:',popt)
+    # print('pcov:',pcov)
 
-    #print()
+    # print()
     #print('max genes',ymax_sat,'genes')
     #print('half-saturation point:',halfsat_sat,'reads')
     #print('current saturation level:', current_sat)
 
-    ## Gene saturation curve.
+    # Gene saturation curve.
     def f(x, a, b):
-        return(b * x /(x+a))
+        return(b * x / (x+a))
 
-    popt, pcov = curve_fit(f, reads, genes, p0=[22000,1000])
-    halfsat_genes = np.round(popt[0],0).astype('int')
-    ymax_genes = np.round(popt[1],0).astype('int')
+    popt, pcov = curve_fit(f, reads, genes, p0=[22000, 1000])
+    halfsat_genes = np.round(popt[0], 0).astype('int')
+    ymax_genes = np.round(popt[1], 0).astype('int')
     halfsat_genes_counts = np.round(f(halfsat_genes, halfsat_genes, ymax_genes)).astype(int)
 
     desiredUniqueGenes = np.round(f(readsDesired, halfsat_genes, ymax_genes)).astype(int)
     #ymax_genes = 1
 
-    ## Plot
+    # Plot
     ax[1].scatter(reads, genes, color='red')
     ax[1].plot(reads, f(reads, *popt), 'r-')
 
     # extrapolate with the curve fit
-    x_more = np.linspace(0,readmax, 100)
+    x_more = np.linspace(0, readmax, 100)
     xmax = np.max(x_more)
     ax[1].plot(x_more, f(x_more, *popt), 'k-')
 
     # set plot boundaries and add asymptotes and lines
-    color_genes='r'
-    ax[1].set_ylim(0,ymax_genes*1.1)
+    color_genes = 'r'
+    ax[1].set_ylim(0, ymax_genes*1.1)
     ax[1].axhline(ymax_genes, linestyle='--', color=color_genes)
-    ax[1].vlines(x= halfsat_genes, ymin=0, ymax=f(halfsat_genes, halfsat_genes, ymax_genes), linestyle=':', color=color_genes)
-    ax[1].hlines(y=f(halfsat_genes, halfsat_genes, ymax_genes), xmin=0, xmax = halfsat_genes, linestyle=':', color=color_genes)
-    ax[1].text(halfsat_genes + xmax/20,0.65*f(halfsat_genes, halfsat_genes, ymax_genes),'half-saturation point: \n' +
-               format(halfsat_genes,',') + ' reads/cell, ' + format(halfsat_genes_counts, ',') + ' genes/cell', size=8)
-    ax[1].text(0.1*xmax,ymax_genes*1.01,format(ymax_genes,',') + ' genes max', size=8)
-    #ax[1].text(xmax*0.08,ymax_genes*0.05,'current saturation: \n' + str(current_mean_reads) + ' reads/cell, ' +
+    ax[1].vlines(x=halfsat_genes, ymin=0, ymax=f(
+        halfsat_genes, halfsat_genes, ymax_genes), linestyle=':', color=color_genes)
+    ax[1].hlines(y=f(halfsat_genes, halfsat_genes, ymax_genes), xmin=0,
+                 xmax=halfsat_genes, linestyle=':', color=color_genes)
+    ax[1].text(halfsat_genes + xmax/20, 0.65*f(halfsat_genes, halfsat_genes, ymax_genes), 'half-saturation point: \n' +
+               format(halfsat_genes, ',') + ' reads/cell, ' + format(halfsat_genes_counts, ',') + ' genes/cell', size=8)
+    ax[1].text(0.1*xmax, ymax_genes*1.01, format(ymax_genes, ',') + ' genes max', size=8)
+    # ax[1].text(xmax*0.08,ymax_genes*0.05,'current saturation: \n' + str(current_mean_reads) + ' reads/cell, ' +
     #           str(current_median_genes) + ' genes/cell', size=7)
 
-
-    #label the axes
+    # label the axes
     ax[1].set_xlabel('Reads per cell')
     ax[1].set_ylabel('Unique Genes Detected')
 
-    ## figure title
+    # figure title
     if not title:
         if isinstance(sampname, str):
             title = sampname
@@ -181,12 +266,12 @@ def satcurves(web_summary_html_file, readmax=250000, title=None, readsDesired=40
     pl.subplots_adjust(wspace=0.5)
     pl.tight_layout()
     pl.show()
-    #print('popt:',popt)
-    #print('pcov:',pcov)
+    # print('popt:',popt)
+    # print('pcov:',pcov)
 
     print()
     #print('max genes',ymax_sat,'genes')
-    print('Sequencing saturation half-saturation point:',format(halfsat_sat, ','),'reads')
+    print('Sequencing saturation half-saturation point:', format(halfsat_sat, ','), 'reads')
     print('Current sequencing saturation level:', current_sat)
     print('Current reads per cell:', current_mean_reads)
     print('Current genes per cell:', current_median_genes)
@@ -194,6 +279,7 @@ def satcurves(web_summary_html_file, readmax=250000, title=None, readsDesired=40
     print('Desired reads per cell:', format(readsDesired, ','))
     print('Sequencing saturation for desired reads per cell:', "{:.1%}".format(desiredSeqSat))
     print('Uniques genes per cell for desired reads per cell:', format(desiredUniqueGenes, ','))
+
 
 def find_satcurves(folder):
     """

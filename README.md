@@ -25,28 +25,37 @@ additional parameter of 'readsDesired', which is used in the repooling calculati
 ### Import and load file path
 ```
 from halfsat import webSum_10x_halfSat, metrics
-web_summary_list = ['10k_PBMC_3p_nextgem_Chromium_X_web_summary.html',
-                    '500_PBMC_3p_LT_Chromium_X_web_summary.html']
+web_summary_list = ['Brain_3p_web_summary.html',
+                    'Brain_3p_LT_web_summary.html',
+                    'Breast_Cancer_3p_LT_web_summary.html']
+web_summary_arc = 'human_brain_3k_web_summary.html'
 ```
 
 ### 1. metrics
 #### The 'delivery doc' setting will provide an abbreviated metrics table from your sample(s) web_summary.html files
 ```
-metrics.tableGenerator(web_summary_list, 'delivery doc')
+metrics.tableGenerator(web_summary_list, 'GEX', 'delivery doc')
 ```
-![delivery_doc](https://user-images.githubusercontent.com/70353129/137335098-984b5f96-07e3-4bc9-8dca-c5bbccaed7c6.JPG)
+![image](https://user-images.githubusercontent.com/70353129/142926083-09bea16e-5a9c-4aa7-b12f-5d769c1df19c.png)
 
 #### The 'full' setting will provide a metrics table with many different attributes scrapped from your sample(s) web_summary.html files
 ```
-metrics.tableGenerator(web_summary_list, 'full')
+metrics.tableGenerator(web_summary_list, 'GEX', 'full')
 ```
-![full](https://user-images.githubusercontent.com/70353129/137335398-609ff8b8-84b0-48b8-ad46-adf8c09853f1.JPG)
+![image](https://user-images.githubusercontent.com/70353129/142926261-ad602faa-4f35-4da6-805e-40083d4cbd1c.png)
+
+#### The 'full' setting can also be obtained for ARC web_summary.html files
+```
+atacTable, gexTable = metrics.tableGenerator([web_summary_arc], webSummaryType='ARC', tableType='full')
+```
+![image](https://user-images.githubusercontent.com/70353129/142925906-f411d27c-2314-48d5-957d-ded14bfe17e1.png)
+![image](https://user-images.githubusercontent.com/70353129/142926309-0358c90d-b130-4e2f-8651-3805a9ce50f2.png)
 
 #### The 'repooling' setting will allow the user to see how many reads are necessary to reach a desired read depth
 ```
 metrics.tableGenerator(web_summary_list, 'repooling', readsDesired=120000)
 ```
-![repooling](https://user-images.githubusercontent.com/70353129/137335634-f031c261-7b8c-4d84-847a-cb9df86a6ef5.JPG)
+![image](https://user-images.githubusercontent.com/70353129/142926398-7af4d07b-7a12-43d0-aad5-0fce4af13881.png)
 
 #### Here, we can see that approximately a billion reads are necessary for both samples to reach 120,000 reads per cell
 
@@ -54,26 +63,42 @@ metrics.tableGenerator(web_summary_list, 'repooling', readsDesired=120000)
 ### 2. webSum_10x_halfSat
 #### We can look at the saturation curves for our samples and extrapolate sequencing saturation and median reads per cell for a given number of reads per cell
 ```
-webSum_10x_halfSat.satcurves(web_summary_list[0], readsDesired=120000)
-webSum_10x_halfSat.satcurves(web_summary_list[1], readsDesired=120000)
+webSum_10x_halfSat.satcurves(web_summary_list[0], readmax=100000, readsDesired=80000)
+webSum_10x_halfSat.satcurves(web_summary_list[1], readmax=100000, readsDesired=80000)
 ```
-![10k_PBMC_3p_nextgem_Chromium_X](https://user-images.githubusercontent.com/70353129/137337258-425dab32-d4e9-47e2-af20-555758ed2663.png)\
-Sequencing saturation half-saturation point: 27,304 reads\
-Current sequencing saturation level: 61.1%\
-Current reads per cell: 41,379\
-Current genes per cell: 2,049
+![image](https://user-images.githubusercontent.com/70353129/142926473-1d2f0392-8b68-4aed-b36e-889fb66fe9dd.png)
 
-Desired reads per cell: 120,000\
-Sequencing saturation for desired reads per cell: 81.5%\
-Uniques genes per cell for desired reads per cell: 2,395
+Sequencing saturation half-saturation point: 40,018 reads per cell\
+Current sequencing saturation level: 50.3%\
+Current reads per cell: 39,865\
+Current genes per cell: 3,358
 
-![500_PBMC_3p_LT_Chromium_Controller](https://user-images.githubusercontent.com/70353129/137337289-e5442a21-4552-4a89-acd4-b269dedefd95.png)\
+Desired reads per cell: 80,000\
+Sequencing saturation for desired reads per cell: 66.7%\
+Uniques genes per cell for desired reads per cell: 3,842
 
-Sequencing saturation half-saturation point: 35,879 reads\
-Current sequencing saturation level: 73.8%\
-Current reads per cell: 99,250\
-Current genes per cell: 2,313
+![image](https://user-images.githubusercontent.com/70353129/142926774-d574de19-2439-4e5b-8ccd-725b7f24f9c0.png)
 
-Desired reads per cell: 120,000\
-Sequencing saturation for desired reads per cell: 77.0%\
-Uniques genes per cell for desired reads per cell: 2,358
+Sequencing saturation half-saturation point: 43,152 reads per cell
+Current sequencing saturation level: 58.5%\
+Current reads per cell: 59,264\
+Current genes per cell: 3,764
+
+Desired reads per cell: 80,000\
+Sequencing saturation for desired reads per cell: 65.0%\
+Uniques genes per cell for desired reads per cell: 3,965
+
+```
+webSum_10x_halfSat.satcurves(web_summary_arc, webSummaryType='ARC', readmax=180000, readsDesired=100000)
+```
+![image](https://user-images.githubusercontent.com/70353129/142926999-be740fe8-52b5-4261-af06-10d5a2c425a2.png)
+
+Sequencing saturation half-saturation point: 18,409 reads per cell\
+Current sequencing saturation level: 86.1%\
+Current reads per cell: 122,334.93\
+Current genes per cell: 2,600
+
+Desired reads per cell: 100,000\
+Sequencing saturation for desired reads per cell: 84.5%\
+Uniques genes per cell for desired reads per cell: 2,526
+Fragments per cell for desired reads per cell: 23,489

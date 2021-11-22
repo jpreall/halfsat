@@ -14,7 +14,7 @@ def scrape_saturation_stats(web_summary_html_file, webSummaryType='GEX'):
     Only works with Cellranger version 3.x and up.
     Args:
         web_summary_html_file (string): web_summary.html file to scrape.
-        webType (string): either 'GEX' or 'ARC' based on Cellranger pipeline used
+        webSummaryType (string): either 'GEX' or 'ARC' based on Cellranger pipeline used
 
     Returns:
         list of int: The number of reads for each point of seq_saturation_plot.
@@ -24,7 +24,9 @@ def scrape_saturation_stats(web_summary_html_file, webSummaryType='GEX'):
         string: The sample name.
 
     Raises:
-        ValueError: when neither 'GEX' nor 'ARC' is supplied
+        KeyError: when attributes in specified web sumamry html file does not match
+                  the supplied format.
+        ValueError: when neither 'GEX' nor 'ARC' is supplied.
 
     """
 
@@ -126,7 +128,8 @@ def satcurves(web_summary_html_file, webSummaryType='GEX', readmax=150000, title
 
     Args:
         web_summary_html_file (string): web_summary.html file to scrape.
-        readmax (int): The end of the plot.
+        webSummaryType (string): either 'GEX' or 'ARC' based on Cellranger pipeline used
+        readmax (int): The limit of the plot.
         title (string): The title  of the plot.
         readsDesired (int): Mean reads/cell desired.
 
@@ -134,7 +137,7 @@ def satcurves(web_summary_html_file, webSummaryType='GEX', readmax=150000, title
         None.
 
     Raises:
-        None.
+        ValueError: when neither 'GEX' nor 'ARC' is supplied.
 
     """
 

@@ -263,7 +263,7 @@ def satcurves(web_summary_html_file, webSummaryType='GEX', readmax=150000, title
     ax[1].hlines(y=f(halfsat_genes, halfsat_genes, ymax_genes), xmin=0,
                  xmax=halfsat_genes, linestyle=':', color=color_genes)
     ax[1].text(halfsat_genes + xmax/20, 0.65*f(halfsat_genes, halfsat_genes, ymax_genes), 'half-saturation point: \n' +
-               format(halfsat_genes, ',') + ' reads/cell, ' + format(halfsat_genes_counts, ',') + ' genes/cell', size=8)
+               format(halfsat_genes, ',') + ' reads/cell, ' + '\n' + format(halfsat_genes_counts, ',') + ' genes/cell', size=8)
     ax[1].text(0.1*xmax, ymax_genes*1.01, format(ymax_genes, ',') + ' genes max', size=8)
     # ax[1].text(xmax*0.08,ymax_genes*0.05,'current saturation: \n' + str(current_mean_reads) + ' reads/cell, ' +
     #           str(current_median_genes) + ' genes/cell', size=7)

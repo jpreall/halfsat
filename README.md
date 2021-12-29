@@ -13,6 +13,9 @@ sequencing saturation and unique genes per cell based on the curves generated.
 the table-type provided: full, delivery doc, or repooling. Repooling allows for the
 additional parameter of 'readsDesired', which is used in the repooling calculation.
 
+**predictUMIs** will take in a metrics_summary_json.json file and output UMIs/cell predictions
+and half-saturation based a michaelis menten curve fit. 
+
 
 ## Installation
 ### 1. Create a new directory and clone repository
@@ -102,3 +105,12 @@ Desired reads per cell: 100,000\
 Sequencing saturation for desired reads per cell: 84.5%\
 Uniques genes per cell for desired reads per cell: 2,526
 Fragments per cell for desired reads per cell: 23,489
+
+### 3. predictUMIs
+#### Plot UMIs versus reads graph and provide dataframe with prediction of UMIs per cell given a specified number of reads.
+```
+# metrics_summary_json was generated from 10x's public 500_PBMC_3p_LT_Chromium_X dataset
+predictUMIs.plotUMIcurve(metrics_summary_json, readmax=175000, readsDesired=150000)
+```
+![image](https://user-images.githubusercontent.com/70353129/147623094-7dd5396b-8ac5-4257-952d-b837cd28b7ce.png)
+![image](https://user-images.githubusercontent.com/70353129/147623125-53742b65-c75b-401a-a3e4-88ba1f608e84.png)

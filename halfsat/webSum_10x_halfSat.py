@@ -382,7 +382,7 @@ def satcurves(web_summary_html_file, webSummaryType='GEX', readMax=150000, title
     return df
 
 
-def find_satcurves(folder):
+def find_satcurves(folder, webSummaryType='GEX', readMax=150000, title=None, readsDesired=40000, readPairsDesired=40000, verbose=True):
     """
     ***Needs updating*** currently deprecated
     Walk through a folder of Cellranger outputs to find a bunch of web_summary files and run them all.
@@ -402,9 +402,6 @@ def find_satcurves(folder):
             if file.endswith(".html"):
                 file_path = os.path.join(root, file)
                 path_term_list = file_path.split('/')
-                sample_name_index_in_path_term_list = path_term_list.index('outs') - 1
-                title = path_term_list[sample_name_index_in_path_term_list]
+                satcurves(file_path, webSummaryType, readMax, title,
+                          readsDesired, readPairsDesired, verbose)
                 print(file_path)
-                # reads, genes, saturations, current_sat, sampname = scrape_saturation_stats(file_path)
-                satcurves(file_path)
-                # satcurves(reads, genes, saturations)

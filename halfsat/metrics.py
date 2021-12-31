@@ -4,8 +4,10 @@ from bs4 import BeautifulSoup
 import pandas as pd
 import numpy as np
 
+__all__ = ['tableGenerator']
 
-def attributeScraper(html, webSummaryType='GEX'):
+
+def __attributeScraper(html, webSummaryType='GEX'):
     """
     Generate a dictionary of all attributes and values from a web_summary.html file.
 
@@ -140,7 +142,7 @@ def tableGenerator(htmlList, webSummaryType='GEX', tableType='full', readsDesire
         initial = True
         # Create dataframe containing all of the web_summaries in list
         for sample in htmlList:
-            sample_dict = attributeScraper(sample, webSummaryType)
+            sample_dict = __attributeScraper(sample, webSummaryType)
             # https://stackoverflow.com/questions/57631895/dictionary-to-dataframe-error-if-using-all-scalar-values-you-must-pass-an-ind
             sample_df = pd.DataFrame([sample_dict])
             if initial is True:
@@ -153,7 +155,7 @@ def tableGenerator(htmlList, webSummaryType='GEX', tableType='full', readsDesire
         initial = True
         # Create dataframe containing all of the web_summaries in list
         for sample in htmlList:
-            ATAC_sample_dict, GEX_sample_dict = attributeScraper(sample, webSummaryType)
+            ATAC_sample_dict, GEX_sample_dict = __attributeScraper(sample, webSummaryType)
             # https://stackoverflow.com/questions/57631895/dictionary-to-dataframe-error-if-using-all-scalar-values-you-must-pass-an-ind
             ATAC_sample_df = pd.DataFrame([ATAC_sample_dict])
             GEX_sample_df = pd.DataFrame([GEX_sample_dict])

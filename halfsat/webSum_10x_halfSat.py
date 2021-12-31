@@ -7,8 +7,10 @@ import matplotlib.pyplot as pl
 import pandas as pd
 import os
 
+__all__ = ['satcurves', 'find_satcurves']
 
-def scrape_saturation_stats(web_summary_html_file, webSummaryType='GEX'):
+
+def __scrape_saturation_stats(web_summary_html_file, webSummaryType='GEX'):
     """
     Scrape saturation stats from web_summary.html produced by 10x Cellranger.
     Only works with Cellranger version 3.x and up.
@@ -122,19 +124,23 @@ def scrape_saturation_stats(web_summary_html_file, webSummaryType='GEX'):
         raise ValueError('webSummaryType neither GEX nor ARC')
 
 
-def satcurves(web_summary_html_file, webSummaryType='GEX', readmax=150000, title=None, readsDesired=40000):
+def satcurves(web_summary_html_file, webSummaryType='GEX', readMax=150000, title=None, readsDesired=40000, readPairsDesired=40000, verbose=True):
     """
-    Plot saturation curves from read/gene/sat data scraped from web_summary.html file.
+    Plot saturation curves from data scraped from web_summary.html file.
+    Only works with Cellranger version 3.x and up.
 
     Args:
         web_summary_html_file (string): web_summary.html file to scrape.
         webSummaryType (string): either 'GEX' or 'ARC' based on Cellranger pipeline used
-        readmax (int): The limit of the plot.
+        readMax (int): The limit of the plot.
         title (string): The title  of the plot.
         readsDesired (int): Mean reads/cell desired.
+        readPairsDesired (int): Mean read pairs/cell desired (for atac portion).
+        verbose (boolean): True to print information pertaining to plots.
 
     Returns:
-        None.
+        df (pandas DataFrame): DataFrame containing sample information and michaelis
+        menten fit predictions.
 
     Raises:
         ValueError: when neither 'GEX' nor 'ARC' is supplied.
@@ -144,12 +150,12 @@ def satcurves(web_summary_html_file, webSummaryType='GEX', readmax=150000, title
     pl.rcParams['figure.dpi'] = 120
 
     if webSummaryType == 'GEX':
-        reads, genes, saturations, current_sat, sampname, current_median_genes, current_mean_reads = scrape_saturation_stats(
+        reads, genes, saturations, current_sat, sampname, current_median_genes, current_mean_reads = __scrape_saturation_stats(
             web_summary_html_file, webSummaryType='GEX')
         fig, ax = pl.subplots(1, 2, figsize=[6.75, 2.75])
 
     elif webSummaryType == 'ARC':
-        arc_dictionary = scrape_saturation_stats(
+        arc_dictionary = __scrape_saturation_stats(
             web_summary_html_file, webSummaryType='ARC')
         reads = np.array(arc_dictionary['gex_dictionary']['mean reads array'])
         genes = np.array(arc_dictionary['gex_dictionary']['median genes array'])
@@ -167,13 +173,6 @@ def satcurves(web_summary_html_file, webSummaryType='GEX', readmax=150000, title
 
     else:
         raise ValueError('webSummaryType neither GEX nor ARC')
-
-    # a is the "kd"
-    # b is the max genes per cell, or fraction saturation
-    # here b=1
-
-    # initiate the figure
-    # fig, ax = pl.subplots(1, 2, figsize=[6.75, 2.75])
 
     # constraining to only 3 bins in x-axis for visiblity purposes
     ax[0].locator_params(axis='x', nbins=4)
@@ -200,7 +199,7 @@ def satcurves(web_summary_html_file, webSummaryType='GEX', readmax=150000, title
     ax[0].plot(reads, f(reads, *popt), 'r-')
 
     # extrapolate with the curve fit
-    x_more = np.linspace(0, readmax, 100)
+    x_more = np.linspace(0, readMax, 100)
     xmax = np.max(x_more)
     ax[0].plot(x_more, f(x_more, *popt), 'k-')
 
@@ -216,8 +215,6 @@ def satcurves(web_summary_html_file, webSummaryType='GEX', readmax=150000, title
                  xmax=halfsat_sat, linestyle=':', color=color_sat)
     ax[0].text(halfsat_sat + xmax/20, 0.4*f(halfsat_sat, halfsat_sat),
                'half-saturation point: \n' + format(halfsat_sat, ',') + ' reads/cell', size=8)
-    # ax[0].text(halfsat_sat, f(halfsat_sat, halfsat_sat),'half-saturation point:' + str(halfsat_sat) + ' reads', size=6)
-    # ax[0].text(xmax*0.065,ymax_sat*0.05,'current saturation:' + str(current_sat) + ', ' + str(current_mean_reads) +' reads/cell', size=7)
 
     # pl.show()
 
@@ -228,12 +225,11 @@ def satcurves(web_summary_html_file, webSummaryType='GEX', readmax=150000, title
     # print('popt:',popt)
     # print('pcov:',pcov)
 
-    # print()
-    # print('max genes',ymax_sat,'genes')
-    # print('half-saturation point:',halfsat_sat,'reads')
-    # print('current saturation level:', current_sat)
-
     # Gene saturation curve.
+    # a is the "kd"
+    # b is the max genes per cell, or fraction saturation
+    # here b=1
+
     def f(x, a, b):
         return(b * x / (x+a))
 
@@ -250,7 +246,7 @@ def satcurves(web_summary_html_file, webSummaryType='GEX', readmax=150000, title
     ax[1].plot(reads, f(reads, *popt), 'r-')
 
     # extrapolate with the curve fit
-    x_more = np.linspace(0, readmax, 100)
+    x_more = np.linspace(0, readMax, 100)
     xmax = np.max(x_more)
     ax[1].plot(x_more, f(x_more, *popt), 'k-')
 
@@ -265,11 +261,10 @@ def satcurves(web_summary_html_file, webSummaryType='GEX', readmax=150000, title
     ax[1].text(halfsat_genes + xmax/20, 0.65*f(halfsat_genes, halfsat_genes, ymax_genes), 'half-saturation point: \n' +
                format(halfsat_genes, ',') + ' reads/cell, ' + '\n' + format(halfsat_genes_counts, ',') + ' genes/cell', size=8)
     ax[1].text(0.1*xmax, ymax_genes*1.01, format(ymax_genes, ',') + ' genes max', size=8)
-    # ax[1].text(xmax*0.08,ymax_genes*0.05,'current saturation: \n' + str(current_mean_reads) + ' reads/cell, ' +
-    #           str(current_median_genes) + ' genes/cell', size=7)
+
     # label the axes
     ax[1].set_xlabel('Reads per cell')
-    ax[1].set_ylabel('Unique Genes Detected')
+    ax[1].set_ylabel('Median genes per cell')
 
     # ATAC saturation curve.
     if webSummaryType == 'ARC':
@@ -281,7 +276,7 @@ def satcurves(web_summary_html_file, webSummaryType='GEX', readmax=150000, title
         ymax_frags = np.round(popt[1], 0).astype('int')
         halfsat_frags_counts = np.round(f(halfsat_frags, halfsat_frags, ymax_frags)).astype(int)
 
-        desiredUniqueFrags = np.round(f(readsDesired, halfsat_frags, ymax_frags)).astype(int)
+        desiredUniqueFrags = np.round(f(readPairsDesired, halfsat_frags, ymax_frags)).astype(int)
         # ymax_genes = 1
 
         # Plot
@@ -289,7 +284,7 @@ def satcurves(web_summary_html_file, webSummaryType='GEX', readmax=150000, title
         ax[2].plot(atac_reads, f(atac_reads, *popt), 'r-')
 
         # extrapolate with the curve fit
-        x_more = np.linspace(0, readmax, 100)
+        x_more = np.linspace(0, readMax, 100)
         xmax = np.max(x_more)
         ax[2].plot(x_more, f(x_more, *popt), 'k-')
 
@@ -302,14 +297,14 @@ def satcurves(web_summary_html_file, webSummaryType='GEX', readmax=150000, title
         ax[2].hlines(y=f(halfsat_frags, halfsat_frags, ymax_frags), xmin=0,
                      xmax=halfsat_frags, linestyle=':', color=color_frags)
         ax[2].text(halfsat_frags + xmax/20, 0.65*f(halfsat_frags, halfsat_frags, ymax_frags), 'half-saturation point: \n' +
-                   format(halfsat_frags, ',') + ' reads/cell, ' + '\n' + format(halfsat_frags_counts, ',') + ' fragments/cell', size=8)
+                   format(halfsat_frags, ',') + ' read pairs/cell, ' + '\n' + format(halfsat_frags_counts, ',') + ' fragments/cell', size=8)
         ax[2].text(0.1*xmax, ymax_frags*1.01, format(ymax_frags, ',') + ' fragments max', size=8)
         # ax[1].text(xmax*0.08,ymax_genes*0.05,'current saturation: \n' + str(current_mean_reads) + ' reads/cell, ' +
         #           str(current_median_genes) + ' genes/cell', size=7)
 
         # label the axes
-        ax[2].set_xlabel('Reads per cell')
-        ax[2].set_ylabel('fragments per cell')
+        ax[2].set_xlabel('Mean read pairs per cell')
+        ax[2].set_ylabel('Median fragments per cell')
 
     # figure title
     if not title:
@@ -322,23 +317,72 @@ def satcurves(web_summary_html_file, webSummaryType='GEX', readmax=150000, title
     pl.show()
     # print('popt:',popt)
     # print('pcov:',pcov)
+    if verbose is True:
+        print()
+        print('Sequencing saturation half-saturation point:',
+              format(halfsat_sat, ','), 'reads per cell')
+        print('Median genes per cell half-saturation point:',
+              format(halfsat_genes_counts, ','), 'genes per cell', ';',
+              format(halfsat_genes, ','), 'reads per cell')
+        if webSummaryType == 'ARC':
+            print('Median fragments per cell half-saturation point:',
+                  format(halfsat_frags_counts, ','), 'fragments per cell', ';',
+                  format(halfsat_frags, ','), 'read pairs per cell')
+        print('Current sequencing saturation level:', current_sat)
+        print('Current reads per cell:', current_mean_reads)
+        print('Current genes per cell:', current_median_genes)
+        if webSummaryType == 'ARC':
+            print('Current median fragments per cell:', current_median_frag)
+            print('Current mean raw read pairs per cell', current_mean_atac_reads)
+        print()
+        print('Desired reads per cell:', format(readsDesired, ','))
+        print('Sequencing saturation for desired reads per cell:', "{:.1%}".format(desiredSeqSat))
+        print('Median genes per cell for desired reads per cell:', format(desiredUniqueGenes, ','))
+        if webSummaryType == 'ARC':
+            print('Desired read pairs per cell:', format(readPairsDesired, ','))
+            print('Fragments per cell for desired reads per cell:', format(desiredUniqueFrags, ','))
 
-    print()
-    # print('max genes',ymax_sat,'genes')
-    print('Sequencing saturation half-saturation point:',
-          format(halfsat_sat, ','), 'reads per cell')
-    print('Current sequencing saturation level:', current_sat)
-    print('Current reads per cell:', current_mean_reads)
-    print('Current genes per cell:', current_median_genes)
-    print()
-    print('Desired reads per cell:', format(readsDesired, ','))
-    print('Sequencing saturation for desired reads per cell:', "{:.1%}".format(desiredSeqSat))
-    print('Uniques genes per cell for desired reads per cell:', format(desiredUniqueGenes, ','))
     if webSummaryType == 'ARC':
-        print('Fragments per cell for desired reads per cell:', format(desiredUniqueFrags, ','))
+        ARC_table_data = {'sample_name': [sampname],
+                          'sequencing saturation halfsat point (reads per cell)': [halfsat_sat],
+                          'median genes halfsat (genes per cell)': [halfsat_genes_counts],
+                          'median genes halfsat (reads per cell)': [halfsat_genes],
+                          'median frags halfsat (frags per cell)': [halfsat_frags_counts],
+                          'median frags halfsat (reads per cell)': [halfsat_frags],
+                          'current sequencing saturation': [current_sat],
+                          'current reads per cell': [current_mean_reads],
+                          'current genes per cell': [current_median_genes],
+                          'current median frags per cell': [current_median_frag],
+                          'current mean raw read pairs per cell': [current_mean_atac_reads],
+                          'desired reads per cell': [readsDesired],
+                          'predicted sequencing sat for ' + str(readsDesired) +
+                          ' reads per cell': ["{:.1%}".format(desiredSeqSat)],
+                          'predicted median genes for ' + str(readsDesired) +
+                          ' reads per cell': [desiredUniqueGenes],
+                          'desired read pairs per cell': [readPairsDesired],
+                          'predicted frags for ' + str(readPairsDesired) +
+                          ' read pairs per cell': [desiredUniqueFrags]
+                          }
+        df = pd.DataFrame.from_dict(ARC_table_data)
+    else:
+        GEX_table_data = {'sample_name': [sampname],
+                          'sequencing saturation halfsat point (reads per cell)': [halfsat_sat],
+                          'median genes halfsat (genes per cell)': [halfsat_genes_counts],
+                          'median genes halfsat (reads per cell)': [halfsat_genes],
+                          'current sequencing saturation': [current_sat],
+                          'current reads per cell': [current_mean_reads],
+                          'current genes per cell': [current_median_genes],
+                          'desired reads per cell': [readsDesired],
+                          'predicted sequencing sat for ' + str(readsDesired) +
+                          ' reads per cell': ["{:.1%}".format(desiredSeqSat)],
+                          'predicted median genes for ' + str(readsDesired) +
+                          ' reads per cell': [desiredUniqueGenes],
+                          }
+        df = pd.DataFrame.from_dict(GEX_table_data)
+    return df
 
 
-def find_satcurves(folder):
+def find_satcurves(folder, webSummaryType='GEX', readMax=150000, title=None, readsDesired=40000, readPairsDesired=40000, verbose=True):
     """
     ***Needs updating*** currently deprecated
     Walk through a folder of Cellranger outputs to find a bunch of web_summary files and run them all.
@@ -358,9 +402,6 @@ def find_satcurves(folder):
             if file.endswith(".html"):
                 file_path = os.path.join(root, file)
                 path_term_list = file_path.split('/')
-                sample_name_index_in_path_term_list = path_term_list.index('outs') - 1
-                title = path_term_list[sample_name_index_in_path_term_list]
+                satcurves(file_path, webSummaryType, readMax, title,
+                          readsDesired, readPairsDesired, verbose)
                 print(file_path)
-                # reads, genes, saturations, current_sat, sampname = scrape_saturation_stats(file_path)
-                satcurves(file_path)
-                # satcurves(reads, genes, saturations)

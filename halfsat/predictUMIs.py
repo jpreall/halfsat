@@ -7,8 +7,10 @@ import matplotlib.pyplot as plt
 import pandas as pd
 import os
 
+__all__ = ['plotUMIcurve']
 
-def scrapeUMIinfo(jsonPath):
+
+def __scrapeUMIinfo(jsonPath):
     """
     Scrape information relating to UMI of a sample's metrics summary json file.
     Currently only tested on Cellranger 6.0.0+ metrics_summary_json.json files.
@@ -57,7 +59,7 @@ def scrapeUMIinfo(jsonPath):
     UMI_dict_abbr = {}
     for key in UMI_dict:
         # slice out the genome identifier before raw_rpc
-        sliced_key = slicer(key, 'raw_rpc')
+        sliced_key = __slicer(key, 'raw_rpc')
         abbr_key = re.sub("raw_rpc_", "", re.sub(
             "_subsampled_filtered_bcs_median_counts", "", sliced_key))
         UMI_dict_abbr[abbr_key] = UMI_dict[key]
@@ -70,7 +72,7 @@ def scrapeUMIinfo(jsonPath):
     return UMI_dict_abbr, sample_id, current_UMIs, current_reads_per_cell
 
 
-def slicer(my_str, sub):
+def __slicer(my_str, sub):
     """
     Remove everything in a string before a specified substring is found.
     Throw exception if substring is not found in string
@@ -97,7 +99,7 @@ def slicer(my_str, sub):
         return my_str
 
 
-def plotUMIcurve(jsonPath, readmax=80000, readsDesired=40000):
+def plotUMIcurve(jsonPath, readMax=80000, readsDesired=40000):
     """
     Plot Unique UMIs detected per cell versus reads per cell.
 
@@ -106,7 +108,7 @@ def plotUMIcurve(jsonPath, readmax=80000, readsDesired=40000):
 
     Args:
         jsonPath (string): path to metrics_summary_json.json file.
-        readmax (int): length of the plot.
+        readMax (int): length of the plot.
         readsDesired: number of reads to predict UMIs per cell.
 
     Returns:
@@ -117,7 +119,7 @@ def plotUMIcurve(jsonPath, readmax=80000, readsDesired=40000):
 
     """
 
-    UMI_dict, my_sample, my_UMIs, my_reads_per_cell = scrapeUMIinfo(jsonPath)
+    UMI_dict, my_sample, my_UMIs, my_reads_per_cell = __scrapeUMIinfo(jsonPath)
     # print('UMI_dict_abbr: ', UMI_dict)
 
     # sort reads (and associated UMIs) so that ax.plot(reads, f(reads, *popt), 'r-')
@@ -148,7 +150,7 @@ def plotUMIcurve(jsonPath, readmax=80000, readsDesired=40000):
     ax.plot(reads, f(reads, *popt), 'r-')
 
     # extrapolate with the curve fit
-    x_more = np.linspace(0, readmax, 100)
+    x_more = np.linspace(0, readMax, 100)
     xmax = np.max(x_more)
     ax.plot(x_more, f(x_more, *popt), 'k-')
 

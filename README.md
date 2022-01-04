@@ -66,51 +66,49 @@ metrics.tableGenerator(web_summary_list, 'repooling', readsDesired=120000)
 ### 2. webSum_10x_halfSat
 #### We can look at the saturation curves for our samples and extrapolate sequencing saturation and median reads per cell for a given number of reads per cell
 ```
-webSum_10x_halfSat.satcurves(web_summary_list[0], readmax=100000, readsDesired=80000)
-webSum_10x_halfSat.satcurves(web_summary_list[1], readmax=100000, readsDesired=80000)
+webSum_10x_halfSat.satcurves(web_summary_list[0], readMax=100000, readsDesired=80000)
 ```
 ![image](https://user-images.githubusercontent.com/70353129/142926473-1d2f0392-8b68-4aed-b36e-889fb66fe9dd.png)
 
-Sequencing saturation half-saturation point: 40,018 reads per cell\
-Current sequencing saturation level: 50.3%\
-Current reads per cell: 39,865\
+Sequencing saturation half-saturation point: 40,018 reads per cell
+Median genes per cell half-saturation point: 2,260 genes per cell ; 14,091 reads per cell
+Current sequencing saturation level: 50.3%
+Current reads per cell: 39,865
 Current genes per cell: 3,358
 
-Desired reads per cell: 80,000\
-Sequencing saturation for desired reads per cell: 66.7%\
-Uniques genes per cell for desired reads per cell: 3,842
+Desired reads per cell: 80,000
+Sequencing saturation for desired reads per cell: 66.7%
+Median genes per cell for desired reads per cell: 3,842
 
-![image](https://user-images.githubusercontent.com/70353129/142926774-d574de19-2439-4e5b-8ccd-725b7f24f9c0.png)
-
-Sequencing saturation half-saturation point: 43,152 reads per cell
-Current sequencing saturation level: 58.5%\
-Current reads per cell: 59,264\
-Current genes per cell: 3,764
-
-Desired reads per cell: 80,000\
-Sequencing saturation for desired reads per cell: 65.0%\
-Uniques genes per cell for desired reads per cell: 3,965
+<img width="903" alt="Screen Shot 2021-12-30 at 9 48 32 PM" src="https://user-images.githubusercontent.com/70353129/147800243-53fc98f1-1c68-4f96-baac-a68438df2845.png">
 
 ```
-webSum_10x_halfSat.satcurves(web_summary_arc, webSummaryType='ARC', readmax=180000, readsDesired=100000)
+webSum_10x_halfSat.satcurves(web_summary_arc, webSummaryType='ARC', readMax=180000, readsDesired=100000, readPairsDesired=150000)
 ```
 ![image](https://user-images.githubusercontent.com/70353129/142926999-be740fe8-52b5-4261-af06-10d5a2c425a2.png)
 
-Sequencing saturation half-saturation point: 18,409 reads per cell\
-Current sequencing saturation level: 86.1%\
-Current reads per cell: 122,334.93\
+Sequencing saturation half-saturation point: 18,409 reads per cell
+Median genes per cell half-saturation point: 1,378 genes per cell ; 9,163 reads per cell
+Median fragments per cell half-saturation point: 26,618 fragments per cell ; 126,635 read pairs per cell
+Current sequencing saturation level: 86.1%
+Current reads per cell: 122,334.93
 Current genes per cell: 2,600
+Current median fragments per cell: 22,881
+Current mean raw read pairs per cell 95,897.34
 
-Desired reads per cell: 100,000\
-Sequencing saturation for desired reads per cell: 84.5%\
-Uniques genes per cell for desired reads per cell: 2,526
-Fragments per cell for desired reads per cell: 23,489
+Desired reads per cell: 100,000
+Sequencing saturation for desired reads per cell: 84.5%
+Median genes per cell for desired reads per cell: 2,526
+Desired read pairs per cell: 150,000
+Fragments per cell for desired reads per cell: 28,866
+
+<img width="900" alt="Screen Shot 2021-12-30 at 9 56 05 PM" src="https://user-images.githubusercontent.com/70353129/147800450-4cf20f95-cc17-4738-bb6e-0a26a802447f.png">
 
 ### 3. predictUMIs
 #### Plot UMIs versus reads graph and provide dataframe with prediction of UMIs per cell given a specified number of reads.
 ```
 # metrics_summary_json was generated from 10x's public 500_PBMC_3p_LT_Chromium_X dataset
-predictUMIs.plotUMIcurve(metrics_summary_json, readmax=175000, readsDesired=150000)
+predictUMIs.plotUMIcurve(metrics_summary_json, readMax=175000, readsDesired=150000)
 ```
 ![image](https://user-images.githubusercontent.com/70353129/147623094-7dd5396b-8ac5-4257-952d-b837cd28b7ce.png)
 ![image](https://user-images.githubusercontent.com/70353129/147623125-53742b65-c75b-401a-a3e4-88ba1f608e84.png)

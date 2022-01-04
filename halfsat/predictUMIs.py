@@ -99,7 +99,7 @@ def __slicer(my_str, sub):
         return my_str
 
 
-def plotUMIcurve(jsonPath, readMax=80000, readsDesired=40000):
+def plot_UMI_curve(jsonPath, readMax=80000, readsDesired=40000, showPlot=True):
     """
     Plot Unique UMIs detected per cell versus reads per cell.
 
@@ -110,6 +110,7 @@ def plotUMIcurve(jsonPath, readMax=80000, readsDesired=40000):
         jsonPath (string): path to metrics_summary_json.json file.
         readMax (int): length of the plot.
         readsDesired: number of reads to predict UMIs per cell.
+        showPlot: whether or not to plot the curve or only return dataframe
 
     Returns:
         Pandas dataframe: Table with sample id, current metrics, and predicted UMIs.
@@ -128,12 +129,10 @@ def plotUMIcurve(jsonPath, readMax=80000, readsDesired=40000):
     # print('reads: ', reads)
     UMIs = [UMI_dict[str(int(key))] for key in reads]
 
-    plt.rcParams['figure.dpi'] = 120
-    fig, ax = plt.subplots(1, 1, figsize=[4, 2.75])
     # print('reads: ', reads)
     # print('UMIs: ', UMIs)
 
-    # Gene saturation curve.
+    # UMI saturation curve.
     def f(x, a, b):
         return(b * x / (x+a))
 
@@ -145,40 +144,45 @@ def plotUMIcurve(jsonPath, readMax=80000, readsDesired=40000):
     desiredUniqueUMIs = np.round(f(readsDesired, halfsat_UMIs, ymax_UMIs)).astype(int)
     # ymax_genes = 1
 
-    # Plot
-    ax.scatter(reads, UMIs, color='red')
-    ax.plot(reads, f(reads, *popt), 'r-')
+    if showPlot is True:
+        # Plot
+        plt.rcParams['figure.dpi'] = 120
+        fig, ax = plt.subplots(1, 1, figsize=[4, 2.75])
+        ax.scatter(reads, UMIs, color='red')
+        ax.plot(reads, f(reads, *popt), 'r-')
 
-    # extrapolate with the curve fit
-    x_more = np.linspace(0, readMax, 100)
-    xmax = np.max(x_more)
-    ax.plot(x_more, f(x_more, *popt), 'k-')
+        # extrapolate with the curve fit
+        x_more = np.linspace(0, readMax, 100)
+        xmax = np.max(x_more)
+        ax.plot(x_more, f(x_more, *popt), 'k-')
 
-    # set plot boundaries and add asymptotes and lines
-    color_UMIs = 'r'
-    ax.set_ylim(0, ymax_UMIs*1.1)
-    ax.axhline(ymax_UMIs, linestyle='--', color=color_UMIs)
-    ax.vlines(x=halfsat_UMIs, ymin=0, ymax=f(
-        halfsat_UMIs, halfsat_UMIs, ymax_UMIs), linestyle=':', color=color_UMIs)
-    ax.hlines(y=f(halfsat_UMIs, halfsat_UMIs, ymax_UMIs), xmin=0,
-              xmax=halfsat_UMIs, linestyle=':', color=color_UMIs)
-    ax.text(halfsat_UMIs + xmax/20, 0.65*f(halfsat_UMIs, halfsat_UMIs, ymax_UMIs), 'half-saturation point: \n' +
-            format(halfsat_UMIs, ',') + ' reads/cell, ' + '\n' + format(halfsat_UMI_counts, ',') + ' UMIs/cell', size=8)
-    ax.text(0.1*xmax, ymax_UMIs*1.01, format(ymax_UMIs, ',') + ' UMIs max', size=8)
+        # set plot boundaries and add asymptotes and lines
+        color_UMIs = 'r'
+        ax.set_ylim(0, ymax_UMIs*1.1)
+        ax.axhline(ymax_UMIs, linestyle='--', color=color_UMIs)
+        ax.vlines(x=halfsat_UMIs, ymin=0, ymax=f(
+            halfsat_UMIs, halfsat_UMIs, ymax_UMIs), linestyle=':', color=color_UMIs)
+        ax.hlines(y=f(halfsat_UMIs, halfsat_UMIs, ymax_UMIs), xmin=0,
+                  xmax=halfsat_UMIs, linestyle=':', color=color_UMIs)
+        ax.text(halfsat_UMIs + xmax/20, 0.65*f(halfsat_UMIs, halfsat_UMIs, ymax_UMIs), 'half-saturation point: \n' +
+                format(halfsat_UMIs, ',') + ' reads/cell, ' + '\n' + format(halfsat_UMI_counts, ',') + ' UMIs/cell', size=8)
+        ax.text(0.1*xmax, ymax_UMIs*1.01, format(ymax_UMIs, ',') + ' UMIs max', size=8)
 
-    # label the axes
-    ax.set_xlabel('Reads per cell')
-    ax.set_ylabel('Unique UMIs detected per cell')
+        # label the axes
+        ax.set_xlabel('Reads per cell')
+        ax.set_ylabel('Unique UMIs detected per cell')
 
-    ax.set_title(my_sample)
+        ax.set_title(my_sample)
 
-    plt.subplots_adjust(wspace=0.5)
-    plt.tight_layout()
-    plt.show()
+        plt.subplots_adjust(wspace=0.5)
+        plt.tight_layout()
+        plt.show()
 
     UMI_table_data = {'sample_id': [my_sample],
-                      'reads_per_cell': [my_reads_per_cell],
-                      'current_UMIs': [my_UMIs],
+                      'reads_per_cell': [int(my_reads_per_cell)],
+                      'current_UMIs': [int(my_UMIs)],
+                      'halfsat_UMIs_reads_per_cell': [halfsat_UMIs],
+                      'halfsat_UMIs': [halfsat_UMI_counts],
                       'predicted UMIs for ' + str(readsDesired) +
                       ' reads per cell': [desiredUniqueUMIs]
                       }
@@ -186,3 +190,31 @@ def plotUMIcurve(jsonPath, readMax=80000, readsDesired=40000):
     # pass column names in the columns parameter
     df = pd.DataFrame.from_dict(UMI_table_data)
     return df
+
+
+def aggr_UMI_table(jsonPathList, readsDesired=40000, showPlot=False):
+    """
+    Create table of UMI halfsat values and UMI predictions for multiple samples.
+
+    Args:
+        jsonPathList (list): a list of json pathes to samples.
+        readsDesired (int): number of reads to estimate the UMIs/cell for.
+        showPlot (boolean): whether to print halfsat UMI plots for each sample
+
+    Returns:
+        sample_df (pandas DataFrame): DataFrame containing UMI numbers for each sample.
+
+    Raises:
+        Exception: description
+
+    """
+
+    initial = True
+    for i in jsonPathList:
+        if initial is True:
+            sample_df = plot_UMI_curve(i, readsDesired=readsDesired, showPlot=showPlot)
+            initial = False
+        else:
+            tmp = plot_UMI_curve(i, readsDesired=readsDesired, showPlot=showPlot)
+            sample_df = sample_df.append(tmp)
+    return sample_df

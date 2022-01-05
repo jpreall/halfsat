@@ -1,4 +1,3 @@
-from bs4 import BeautifulSoup
 import re
 import json
 import numpy as np
@@ -132,7 +131,11 @@ def plot_UMI_curve(jsonPath, readMax=80000, readsDesired=40000, showPlot=True):
     # print('reads: ', reads)
     # print('UMIs: ', UMIs)
 
-    # UMI saturation curve.
+    # UMI saturation curve. b is vmax (max umis)
+    # a is km the michaelis menten constant, reads per cell at half vmax
+    # [reads, UMIs]
+    # better way to optimize it. Might break with low seq depth (2 mill reads)
+    # KC's myseq, or JG, DTPark
     def f(x, a, b):
         return(b * x / (x+a))
 
@@ -183,6 +186,7 @@ def plot_UMI_curve(jsonPath, readMax=80000, readsDesired=40000, showPlot=True):
                       'current_UMIs': [int(my_UMIs)],
                       'halfsat_UMIs_reads_per_cell': [halfsat_UMIs],
                       'halfsat_UMIs': [halfsat_UMI_counts],
+                      'max_UMIs': [ymax_UMIs],
                       'predicted UMIs for ' + str(readsDesired) +
                       ' reads per cell': [desiredUniqueUMIs]
                       }

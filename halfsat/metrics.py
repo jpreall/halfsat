@@ -103,8 +103,30 @@ def __attributeScraper(html, webSummaryType='GEX'):
 
         return arcATAC_attributeDict, arcGEX_attributeDict
 
+    elif webSummaryType == 'VDJ':
+        try:
+            pipeline_table = constant_data['summary']['summary_tab']['pipeline_info_table']['rows']
+            vdj_enrichment = constant_data['summary']['summary_tab']['vdj_enrichment']['table']['rows']
+            vdj_expression = constant_data['summary']['summary_tab']['vdj_expression']['table']['rows']
+            vdj_annotation = constant_data['summary']['summary_tab']['vdj_annotation']['table']['rows']
+            cells_table = constant_data['summary']['summary_tab']['cells']['table']['rows']
+            vdj_sequencing = constant_data['summary']['summary_tab']['vdj_sequencing']['table']['rows']
+
+            vdj_attributeDict = {}
+            vdj_tableList = [pipeline_table, vdj_enrichment, vdj_expression,
+                             vdj_annotation, cells_table, vdj_sequencing]
+            for table in vdj_tableList:
+                for entry in table:
+                    if entry[0] not in vdj_attributeDict:
+                        vdj_attributeDict[entry[0]] = entry[1]
+            return vdj_attributeDict
+
+        except KeyError:
+            print('check VDJ web summary html file because attributes not found')
+            raise
+
     else:
-        raise ValueError('webSummaryType neither GEX nor ARC')
+        raise ValueError('webSummaryType neither GEX nor ARC nor VDJ')
 
 
 def tableGenerator(htmlList, webSummaryType='GEX', tableType='full', readsDesired=40000):
@@ -138,7 +160,7 @@ def tableGenerator(htmlList, webSummaryType='GEX', tableType='full', readsDesire
     ATAC_full_df = pd.DataFrame()
     GEX_full_df = pd.DataFrame()
 
-    if webSummaryType == 'GEX':
+    if webSummaryType == 'GEX' or 'VDJ':
         initial = True
         # Create dataframe containing all of the web_summaries in list
         for sample in htmlList:
@@ -167,7 +189,7 @@ def tableGenerator(htmlList, webSummaryType='GEX', tableType='full', readsDesire
                 ATAC_full_df = ATAC_full_df.append(ATAC_sample_df)
                 GEX_full_df = GEX_full_df.append(GEX_sample_df)
     else:
-        raise ValueError('webSummaryType neither GEX nor ARC')
+        raise ValueError('webSummaryType neither GEX nor ARC nor VDJ')
 
     def fullTableMaker(fullDataframe):
         # delete columns like "Sample Description" if empty/full of NaNs
@@ -179,7 +201,7 @@ def tableGenerator(htmlList, webSummaryType='GEX', tableType='full', readsDesire
         return fullDataframe
 
     if tableType == 'full':
-        if webSummaryType == 'GEX':
+        if webSummaryType == 'GEX' or 'VDJ':
             full_df = fullTableMaker(full_df)
             return full_df
         else:
@@ -193,9 +215,9 @@ def tableGenerator(htmlList, webSummaryType='GEX', tableType='full', readsDesire
             deliveryHeaders = ['sample id', 'estimated number of cells', 'mean reads per cell', 'median genes per cell',
                                'number of reads', 'sequencing saturation', 'reads mapped to genome', 'reads mapped confidently to genome',
                                'fraction reads in cells', 'median umi counts per cell', 'tso_frac']
-        elif webSummaryType == 'ARC':
+        elif webSummaryType == 'ARC' or 'VDJ':
             raise Exception(
-                "delivery doc not yet implemented for ARC pipelines"
+                "delivery doc not yet implemented for ARC and VDJ pipelines"
             )
         for col in full_df.columns:
             if col.lower() not in deliveryHeaders:
@@ -204,8 +226,8 @@ def tableGenerator(htmlList, webSummaryType='GEX', tableType='full', readsDesire
         return full_df
 
     elif tableType == 'repooling':
-        if webSummaryType == 'ARC':
-            raise Exception("repooling table not yet implemented for ARC pipelines")
+        if webSummaryType == 'ARC' or 'VDJ':
+            raise Exception("repooling table not yet implemented for ARC and VDJ pipelines")
 
         repoolingHeaders = ['sample id', 'estimated number of cells',
                             'mean reads per cell', 'number of reads']

@@ -160,7 +160,7 @@ def tableGenerator(htmlList, webSummaryType='GEX', tableType='full', readsDesire
     ATAC_full_df = pd.DataFrame()
     GEX_full_df = pd.DataFrame()
 
-    if webSummaryType == 'GEX' or 'VDJ':
+    if webSummaryType == ('GEX' or 'VDJ'):
         initial = True
         # Create dataframe containing all of the web_summaries in list
         for sample in htmlList:
@@ -201,7 +201,7 @@ def tableGenerator(htmlList, webSummaryType='GEX', tableType='full', readsDesire
         return fullDataframe
 
     if tableType == 'full':
-        if webSummaryType == 'GEX' or 'VDJ':
+        if webSummaryType == ('GEX' or 'VDJ'):
             full_df = fullTableMaker(full_df)
             return full_df
         else:
@@ -226,7 +226,7 @@ def tableGenerator(htmlList, webSummaryType='GEX', tableType='full', readsDesire
         return full_df
 
     elif tableType == 'repooling':
-        if webSummaryType == 'ARC' or 'VDJ':
+        if webSummaryType == ('ARC' or 'VDJ'):
             raise Exception("repooling table not yet implemented for ARC and VDJ pipelines")
 
         repoolingHeaders = ['sample id', 'estimated number of cells',

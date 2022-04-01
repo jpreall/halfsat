@@ -125,8 +125,30 @@ def __attributeScraper(html, webSummaryType='GEX'):
             print('check VDJ web summary html file because attributes not found')
             raise
 
+    elif webSummaryType == 'ATAC':
+        try:
+            pipeline_table = constant_data['pipeline_info_table']['rows']
+            seq_info_table = constant_data['sequencing_info_table']['rows']
+            mapping_table = constant_data['mapping_table']['rows']
+            cells_metrics_table = constant_data['cell_metrics_table']['rows']
+            complexity_table = constant_data['bulk_complexity_table']['rows']
+            targeting_table = constant_data['targeting_table']['rows']
+
+            atac_attributeDict = {}
+            atac_tableList = [pipeline_table, seq_info_table, mapping_table,
+                              cells_metrics_table, complexity_table, targeting_table]
+            for table in atac_tableList:
+                for entry in table:
+                    if entry[0] not in atac_attributeDict:
+                        atac_attributeDict[entry[0]] = entry[1]
+            return atac_attributeDict
+
+        except KeyError:
+            print('check ATAC web summary html file because attributes not found')
+            raise
+
     else:
-        raise ValueError('webSummaryType neither GEX nor ARC nor VDJ')
+        raise ValueError('webSummaryType neither GEX nor ARC nor VDJ nor ATAC')
 
 
 def tableGenerator(htmlList, webSummaryType='GEX', tableType='full', readsDesired=40000):
@@ -160,7 +182,7 @@ def tableGenerator(htmlList, webSummaryType='GEX', tableType='full', readsDesire
     ATAC_full_df = pd.DataFrame()
     GEX_full_df = pd.DataFrame()
 
-    if webSummaryType == ('GEX' or 'VDJ'):
+    if (webSummaryType == 'GEX' or webSummaryType == 'VDJ' or webSummaryType == 'ATAC'):
         initial = True
         # Create dataframe containing all of the web_summaries in list
         for sample in htmlList:
@@ -189,7 +211,7 @@ def tableGenerator(htmlList, webSummaryType='GEX', tableType='full', readsDesire
                 ATAC_full_df = ATAC_full_df.append(ATAC_sample_df)
                 GEX_full_df = GEX_full_df.append(GEX_sample_df)
     else:
-        raise ValueError('webSummaryType neither GEX nor ARC nor VDJ')
+        raise ValueError('webSummaryType neither GEX nor ARC nor VDJ nor ATAC')
 
     def fullTableMaker(fullDataframe):
         # delete columns like "Sample Description" if empty/full of NaNs
@@ -201,7 +223,7 @@ def tableGenerator(htmlList, webSummaryType='GEX', tableType='full', readsDesire
         return fullDataframe
 
     if tableType == 'full':
-        if webSummaryType == ('GEX' or 'VDJ'):
+        if (webSummaryType == 'GEX' or webSummaryType == 'VDJ' or webSummaryType == 'ATAC'):
             full_df = fullTableMaker(full_df)
             return full_df
         else:
@@ -215,9 +237,9 @@ def tableGenerator(htmlList, webSummaryType='GEX', tableType='full', readsDesire
             deliveryHeaders = ['sample id', 'estimated number of cells', 'mean reads per cell', 'median genes per cell',
                                'number of reads', 'sequencing saturation', 'reads mapped to genome', 'reads mapped confidently to genome',
                                'fraction reads in cells', 'median umi counts per cell', 'tso_frac']
-        elif webSummaryType == 'ARC' or 'VDJ':
+        elif (webSummaryType == 'ARC' or webSummaryType == 'VDJ' or webSummaryType == 'ATAC'):
             raise Exception(
-                "delivery doc not yet implemented for ARC and VDJ pipelines"
+                "delivery doc not yet implemented for ARC, VDJ, and ATAC pipelines"
             )
         for col in full_df.columns:
             if col.lower() not in deliveryHeaders:
@@ -226,8 +248,8 @@ def tableGenerator(htmlList, webSummaryType='GEX', tableType='full', readsDesire
         return full_df
 
     elif tableType == 'repooling':
-        if webSummaryType == ('ARC' or 'VDJ'):
-            raise Exception("repooling table not yet implemented for ARC and VDJ pipelines")
+        if (webSummaryType == 'ARC' or webSummaryType == 'VDJ' or webSummaryType == 'ATAC'):
+            raise Exception("repooling table not yet implemented for ARC, VDJ, and ATAC pipelines")
 
         repoolingHeaders = ['sample id', 'estimated number of cells',
                             'mean reads per cell', 'number of reads']

@@ -11,20 +11,21 @@ def __attributeScraper(html, webSummaryType='GEX'):
     """
     Generate a dictionary of all attributes and values from a web_summary.html file.
 
-    Scrape attributes from cellranger v3-6 web_summary.html to generate a dictionary of
+    Scrape attributes from cellranger v4-6 web_summary.html to generate a dictionary of
     attributes and values from all metrics in the json portion of web_summary.html.
 
     Args:
         html (str): Path to web_summary.html file of desired experiment/sample.
-        webSummaryType (string): either 'GEX' or 'ARC' based on Cellranger pipeline used.
+        webSummaryType (string): either 'GEX', 'ARC', 'VDJ', or 'ATAC' based on Cellranger pipeline used.
 
     Returns:
         dict: Dictionary of attribute (key) and corresponding value. 2 dictionaries
               if 'ARC' pipeline is used.
 
     Raises:
-        ValueError: when neither 'GEX' nor 'ARC' is supplied.
-        KeyError: when webSummaryType does not match the web summary html file.
+        UnboundLocalError: when web summary files are not used from Cellranger 4.0.0+/
+        ValueError: when neither 'GEX', 'ARC', 'VDJ', nor 'ATAC' is supplied.
+        KeyError: when webSummaryType does not match the web summary html file information.
 
     """
 
@@ -36,7 +37,11 @@ def __attributeScraper(html, webSummaryType='GEX'):
     f.close()
 
     # need to include +1 to include end of string (the last })
-    constant_data = json.loads(const_data[const_data.find('{'):const_data.find('}\n')+1])
+    try:
+        constant_data = json.loads(const_data[const_data.find('{'):const_data.find('}\n')+1])
+    except UnboundLocalError:
+        print('Input web summary files likely not generated with Cellranger 4.0.0+. Please check input files.')
+        raise
 
     if webSummaryType == 'GEX':
         # extract data from JSON tables

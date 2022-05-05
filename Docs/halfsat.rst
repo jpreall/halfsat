@@ -20,14 +20,6 @@ halfsat.predictUMIs module
    :undoc-members:
    :show-inheritance:
 
-halfsat.predictUMIsRunner module
---------------------------------
-
-.. automodule:: halfsat.predictUMIsRunner
-   :members:
-   :undoc-members:
-   :show-inheritance:
-
 halfsat.webSum\_10x\_halfSat module
 -----------------------------------
 

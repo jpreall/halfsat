@@ -47,5 +47,5 @@ setup(name=PACKAGE_NAME,
       url=URL,
       install_requires=INSTALL_REQUIRES,
       packages=find_packages(),
-      extras_require={'testing': testing_extras, 'docs': docs_extras}
+      extras_require={'docs': docs_extras}
       )

@@ -21,8 +21,10 @@ project = 'halfsat'
 copyright = '2022, Brian He, Jonathan Preall'
 author = 'Brian He, Jonathan Preall'
 
+from halfsat import __version__
+version = __version__
 # The full version, including alpha/beta/rc tags
-release = '1.0.0'
+release = version
 
 
 # -- General configuration ---------------------------------------------------

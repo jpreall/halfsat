@@ -1,9 +1,11 @@
 import pathlib
 from setuptools import setup, find_packages
 
+from halfsat import __version__
+
 HERE = pathlib.Path(__file__).parent
 
-VERSION = '0.1.0'
+VERSION = __version__
 PACKAGE_NAME = 'halfsat'
 AUTHOR = 'Jonathan Preall and Brian He'
 AUTHOR_EMAIL = 'jpreall@cshl.edu; bhe@cshl.edu'

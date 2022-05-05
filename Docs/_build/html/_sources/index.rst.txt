@@ -1,5 +1,5 @@
 .. halfsat documentation master file, created by
-   sphinx-quickstart on Thu May  5 11:14:14 2022.
+   sphinx-quickstart on Thu May  5 16:06:40 2022.
    You can adapt this file completely to your liking, but it should at least
    contain the root `toctree` directive.
 
@@ -10,7 +10,7 @@ Welcome to halfsat's documentation!
    :maxdepth: 2
    :caption: Contents:
 
-   modules   
+   modules
 
 Indices and tables
 ==================

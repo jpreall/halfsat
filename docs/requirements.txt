@@ -6,7 +6,7 @@ sphinx_rtd_theme==1.0.0
 readthedocs-sphinx-search==0.1.1
 bs4==0.0.1
 matplotlib==3.3.3
-argparse==0.2.5
+argparse==0.3.0
 scanpy==1.6.0
 h5py==3.1.0
 numpy==1.19.2

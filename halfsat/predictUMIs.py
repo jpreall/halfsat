@@ -6,7 +6,7 @@ import matplotlib.pyplot as plt
 import pandas as pd
 import os
 
-__all__ = ['plotUMIcurve']
+__all__ = ['plot_UMI_curve']
 
 
 def __scrapeUMIinfo(jsonPath):

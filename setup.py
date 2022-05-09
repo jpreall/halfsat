@@ -1,9 +1,11 @@
 import pathlib
 from setuptools import setup, find_packages
 
+from halfsat import __version__
+
 HERE = pathlib.Path(__file__).parent
 
-VERSION = '0.1.0'
+VERSION = __version__
 PACKAGE_NAME = 'halfsat'
 AUTHOR = 'Jonathan Preall and Brian He'
 AUTHOR_EMAIL = 'jpreall@cshl.edu; bhe@cshl.edu'
@@ -25,6 +27,15 @@ INSTALL_REQUIRES = [
       'scipy'
 ]
 
+docs_extras = [
+    'Sphinx >= 3.0.0',  # Force RTD to use >= 3.0.0
+    'docutils',
+    'pylons-sphinx-themes >= 1.0.8',  # Ethical Ads
+    'pylons_sphinx_latesturl',
+    'repoze.sphinx.autointerface',
+    'sphinxcontrib-autoprogram',
+]
+
 setup(name=PACKAGE_NAME,
       version=VERSION,
       description=DESCRIPTION,
@@ -35,5 +46,6 @@ setup(name=PACKAGE_NAME,
       author_email=AUTHOR_EMAIL,
       url=URL,
       install_requires=INSTALL_REQUIRES,
-      packages=find_packages()
+      packages=find_packages(),
+      extras_require={'docs': docs_extras}
       )

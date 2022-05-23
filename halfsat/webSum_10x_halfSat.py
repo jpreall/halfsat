@@ -158,9 +158,9 @@ def satcurves(web_summary_html_file, webSummaryType='GEX', model='lw', readMax=1
     elif webSummaryType == 'ARC':
         arc_dictionary = __scrape_saturation_stats(
             web_summary_html_file, webSummaryType='ARC')
-        reads = np.array(arc_dictionary['gex_dictionary']['mean reads array'])
-        genes = np.array(arc_dictionary['gex_dictionary']['median genes array'])
-        saturations = np.array(arc_dictionary['gex_dictionary']['percent duplicates array'])
+        reads = np.array(arc_dictionary['gex_dictionary']['mean reads array'])[1:]  # slice 0s for lw fitting
+        genes = np.array(arc_dictionary['gex_dictionary']['median genes array'])[1:]  # slice 0s for lw fitting
+        saturations = np.array(arc_dictionary['gex_dictionary']['percent duplicates array'])[1:]  # slice 0s for lw fitting
         current_sat = arc_dictionary['gex_dictionary']['percent duplicates']
         sampname = arc_dictionary['gex_dictionary']['sample name']
         current_median_genes = arc_dictionary['gex_dictionary']['current median genes']
@@ -205,7 +205,7 @@ def satcurves(web_summary_html_file, webSummaryType='GEX', model='lw', readMax=1
         y0 = -0.50
         solution = brentq(f2, a, b, args=(popt[0], y0))
         halfsat_sat = np.round(solution, 0).astype('int')
-        print('halfsat: ', halfsat_sat)
+        #print('halfsat: ', halfsat_sat)
     else:
          halfsat_sat = np.round(popt[0], 0).astype('int')
          #ymax = np.round(popt[1],0).astype('int')

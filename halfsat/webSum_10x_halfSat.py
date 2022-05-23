@@ -52,11 +52,11 @@ def __scrape_saturation_stats(web_summary_html_file, webSummaryType='GEX'):
             raise
 
         reads = np.array(constant_data['summary']['analysis_tab']
-                         ['seq_saturation_plot']['plot']['data'][0]['x'])
+                         ['seq_saturation_plot']['plot']['data'][0]['x'])[1:]  # slice out zeros to avoid model error
         genes = np.array(constant_data['summary']['analysis_tab']
-                         ['median_gene_plot']['plot']['data'][0]['y'])
+                         ['median_gene_plot']['plot']['data'][0]['y'])[1:]  # slice out zeros to avoid model error
         saturations = np.array(constant_data['summary']['analysis_tab']
-                               ['seq_saturation_plot']['plot']['data'][0]['y'])
+                               ['seq_saturation_plot']['plot']['data'][0]['y'])[1:]  # slice out zeros to avoid model error
 
         cells_table = constant_data['summary']['summary_tab']['cells']['table']['rows']
         for entry in cells_table:
@@ -124,7 +124,7 @@ def __scrape_saturation_stats(web_summary_html_file, webSummaryType='GEX'):
         raise ValueError('webSummaryType neither GEX nor ARC')
 
 
-def satcurves(web_summary_html_file, webSummaryType='GEX', readMax=150000, title=None, readsDesired=40000, readPairsDesired=40000, verbose=True):
+def satcurves(web_summary_html_file, webSummaryType='GEX', model='lw', readMax=150000, title=None, readsDesired=40000, readPairsDesired=40000, verbose=True):
     """
     Plot saturation curves from data scraped from web_summary.html file.
     Only works with Cellranger version 3.x and up.
@@ -132,6 +132,7 @@ def satcurves(web_summary_html_file, webSummaryType='GEX', readMax=150000, title
     Args:
         web_summary_html_file (string): web_summary.html file to scrape.
         webSummaryType (string): either 'GEX' or 'ARC' based on Cellranger pipeline used
+        model (string): either 'lw' for lander-waterman fit or 'mm' for michaelis menten fit
         readMax (int): The limit of the plot.
         title (string): The title  of the plot.
         readsDesired (int): Mean reads/cell desired.
@@ -180,19 +181,38 @@ def satcurves(web_summary_html_file, webSummaryType='GEX', readMax=150000, title
     if webSummaryType == 'ARC':
         ax[2].locator_params(axis='x', nbins=4)
 
-    # Fit the curves
-    # Step 1: Saturation curve.  b = 1
+    # Fit the curves for sequencing saturation
+    if model == 'lw':
+        def f(N, X):
+            return (1 - (1 - np.exp((-N / X))) * (X / N))
 
-    def f(x, a):
-        return(x / (x+a))
+        # reference: https://stackoverflow.com/questions/22277982/how-to-find-50-point-after-curve-fitting-using-numpy
+        def f2(N, X, y0=0):
+            return (1 - (1 - np.exp((-N / X))) * (X / N) + y0)
+    elif model == 'mm':
+        def f(x, a):
+            return (x / (x+a))
+    else:
+        raise Exception('Model must be either lander-waterman (lw) or michaelis-menten (mm)')
 
     popt, pcov = curve_fit(f, reads, saturations)
-    halfsat_sat = np.round(popt[0], 0).astype('int')
-    # ymax = np.round(popt[1],0).astype('int')
+
+    if model == 'lw':
+        # Find actual halfsat point for sequencing saturation for for lander-waterman
+        from scipy.optimize import brentq
+        a = np.min(reads)
+        b = np.max(reads)
+        y0 = -0.50
+        solution = brentq(f2, a, b, args=(popt[0], y0))
+        halfsat_sat = np.round(solution, 0).astype('int')
+        print('halfsat: ', halfsat_sat)
+    else:
+         halfsat_sat = np.round(popt[0], 0).astype('int')
+         #ymax = np.round(popt[1],0).astype('int')
     ymax_sat = 1
 
     assert readsDesired > 0, "Cannot have negative mean reads/cell"
-    desiredSeqSat = np.round(f(readsDesired, halfsat_sat), 3)
+    desiredSeqSat = np.round(f(readsDesired, popt[0]), 3)
 
     # Plot
     ax[0].scatter(reads, saturations)
@@ -210,8 +230,8 @@ def satcurves(web_summary_html_file, webSummaryType='GEX', readMax=150000, title
     ax[0].set_ylim(0, 1.1)
     ax[0].axhline(ymax_sat, linestyle='--', color=color_sat)
     ax[0].vlines(x=halfsat_sat, ymin=0, ymax=f(
-        halfsat_sat, halfsat_sat), linestyle=':', color=color_sat)
-    ax[0].hlines(y=f(halfsat_sat, halfsat_sat), xmin=0,
+        halfsat_sat, popt[0]), linestyle=':', color=color_sat)
+    ax[0].hlines(y=f(halfsat_sat, popt[0]), xmin=0,
                  xmax=halfsat_sat, linestyle=':', color=color_sat)
     ax[0].text(halfsat_sat + xmax/20, 0.4*f(halfsat_sat, halfsat_sat),
                'half-saturation point: \n' + format(halfsat_sat, ',') + ' reads/cell', size=8)
@@ -266,7 +286,7 @@ def satcurves(web_summary_html_file, webSummaryType='GEX', readMax=150000, title
     ax[1].set_xlabel('Reads per cell')
     ax[1].set_ylabel('Median genes per cell')
 
-    # ATAC saturation curve.
+    # ARC saturation curve.
     if webSummaryType == 'ARC':
         def f(x, a, b):
             return(b * x / (x+a))

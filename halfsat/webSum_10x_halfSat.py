@@ -201,7 +201,9 @@ def satcurves(web_summary_html_file, webSummaryType='GEX', model='lw', readMax=1
         # Find actual halfsat point for sequencing saturation for for lander-waterman
         from scipy.optimize import brentq
         a = np.min(reads)
-        b = np.max(reads)
+        # https://stackoverflow.com/questions/53631988/valueerror-fa-and-fb-must-have-different-sign
+        # Need a wider range to find the halfsat point
+        b = np.max(reads)*100
         y0 = -0.50
         solution = brentq(f2, a, b, args=(popt[0], y0))
         halfsat_sat = np.round(solution, 0).astype('int')

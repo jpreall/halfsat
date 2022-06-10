@@ -11,28 +11,28 @@ import os
 
 class webSum_model:
     """Class that contains sequencing saturation and genes per cell models. Based on Lander-waterman and
-       michaelis-menten equations.
+    michaelis-menten equations.
 
-        Attributes:
-            web_summary_html_file (str): A boolean indicating if we like SPAM or not.
-            reads (array-like): array of reads corresponding to 10x CellRanger count plot
-            genes (array-like): array of genes corresponding to 10x CellRanger count genes plot
-            saturations (array-like): array of saturations corresponding to 10x CellRanger count saturations plot
-            current_sat (str): sample's current saturation
-            sampname (str): sample's name
-            current_median_genes (str): sample's current median genes per cell
-            current_mean_reads (str): sample's current mean reads per cell.
-            seqSatModel (str): Either 'lw' (lander-waterman) or 'mm' (michaelis-menten) for saturation model fit
-            popt_saturation (array): optimal values for the parameters so that the ssr of sat function is minimized
-            pcov_saturation (2d array): the estimated covariance of popt
-            halfsat_sat_reads_per_cell (int): estimated reads per cell for 0.5 saturation
-            popt_genes (array): optimal values for the parameters so that the ssr of genes function is minimized
-            pcov_genes (2d array): the estimated covariance of popt
-            halfsat_genes (int): half saturation of genes per cell
-            ymax_genes (int): max number of genes per cell based on model
-            halfsat_genes_reads_per_cell (int): estimated reads per cell for 0.5 saturation of genes
+    Attributes:
+        web_summary_html_file (str): path to 10x CellRanger count web summary file
+        reads (array_like): array of reads corresponding to 10x CellRanger count plot
+        genes (array_like): array of genes corresponding to 10x CellRanger count genes plot
+        saturations (array_like): array of saturations corresponding to 10x CellRanger count saturations plot
+        current_sat (str): sample's current saturation
+        sampname (str): sample's name
+        current_median_genes (str): sample's current median genes per cell
+        current_mean_reads (str): sample's current mean reads per cell.
+        seqSatModel (str): Either 'lw' (lander-waterman) or 'mm' (michaelis-menten) for saturation model fit
+        popt_saturation (array): optimal values for the parameters so that the ssr of sat function is minimized
+        pcov_saturation (2d array): the estimated covariance of popt
+        halfsat_sat_reads_per_cell (int): estimated reads per cell for 0.5 saturation
+        popt_genes (array): optimal values for the parameters so that the ssr of genes function is minimized
+        pcov_genes (2d array): the estimated covariance of popt
+        halfsat_genes (int): half saturation of genes per cell
+        ymax_genes (int): max number of genes per cell based on model
+        halfsat_genes_reads_per_cell (int): estimated reads per cell for 0.5 saturation of genes
 
-        """
+    """
     def __init__(self, web_summary_html_file):
         """Inits webSum_model with attributes. """
         self.web_summary_html_file = web_summary_html_file
@@ -220,9 +220,9 @@ class webSum_model:
         Args:
             web_summary_html_file (string): web_summary.html file to scrape.
             readMax (int): The limit of the plot.
-            reads_test (arr): array for read values to test model against.
-            saturations_test (arr): array of saturation values to test model against.
-            genes_test (arr): array of gene values to test model against.
+            reads_test (array_like): array for read values to test model against.
+            saturations_test (array_like): array of saturation values to test model against.
+            genes_test (array_like): array of gene values to test model against.
 
         Raises:
             ValueError: when neither 'lw' or 'mm' is provided.
@@ -331,7 +331,7 @@ class webSum_model:
         """
         Use model to fit test read values.
         Args:
-            reads_test (arr): read values to test model against
+            reads_test (array_like): read values to test model against
 
         Returns:
             int: predicted read values for given read values.
@@ -357,8 +357,8 @@ class webSum_model:
         """
         Calculates Rsquared value of the sequencing saturation model fit given read and saturations test data.
         Args:
-            reads_test (arr): array of reads to test model against.
-            seq_saturation_test (arr): array of seq saturations to test model against.
+            reads_test (array_like): array of reads to test model against.
+            seq_saturation_test (array_like): array of seq saturations to test model against.
 
         Returns:
             float: Rsquared value.
@@ -389,7 +389,7 @@ class webSum_model:
         """
 
         Args:
-            reads_test (arr): array of reads to test model against.
+            reads_test (array_like): array of reads to test model against.
 
         Returns:
             int: predicted gene values for given read values.
@@ -407,8 +407,8 @@ class webSum_model:
         """
         Calculates Rsquared value of the gene model fit given read and genes test data.
         Args:
-            reads_test (arr): array of reads to test model against.
-            genes_test (arr): array of genes to test model against.
+            reads_test (array_like): array of reads to test model against.
+            genes_test (array_like): array of genes to test model against.
 
         Returns:
             float: Rsquared value.

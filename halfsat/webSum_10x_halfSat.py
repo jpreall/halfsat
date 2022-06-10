@@ -10,9 +10,32 @@ import os
 #__all__ = ['satcurves', 'find_satcurves']
 
 class webSum_model:
-    def __init__(self, web_summary_html_file, webSummaryType):
+    """Class that contains sequencing saturation and genes per cell models. Based on Lander-waterman and
+       michaelis-menten equations.
+
+        Attributes:
+            web_summary_html_file (str): A boolean indicating if we like SPAM or not.
+            reads (array-like): array of reads corresponding to 10x CellRanger count plot
+            genes (array-like): array of genes corresponding to 10x CellRanger count genes plot
+            saturations (array-like): array of saturations corresponding to 10x CellRanger count saturations plot
+            current_sat (str): sample's current saturation
+            sampname (str): sample's name
+            current_median_genes (str): sample's current median genes per cell
+            current_mean_reads (str): sample's current mean reads per cell.
+            seqSatModel (str): Either 'lw' (lander-waterman) or 'mm' (michaelis-menten) for saturation model fit
+            popt_saturation (array): optimal values for the parameters so that the ssr of sat function is minimized
+            pcov_saturation (2d array): the estimated covariance of popt
+            halfsat_sat_reads_per_cell (int): estimated reads per cell for 0.5 saturation
+            popt_genes (array): optimal values for the parameters so that the ssr of genes function is minimized
+            pcov_genes (2d array): the estimated covariance of popt
+            halfsat_genes (int): half saturation of genes per cell
+            ymax_genes (int): max number of genes per cell based on model
+            halfsat_genes_reads_per_cell (int): estimated reads per cell for 0.5 saturation of genes
+
+        """
+    def __init__(self, web_summary_html_file):
+        """Inits webSum_model with attributes. """
         self.web_summary_html_file = web_summary_html_file
-        self.webSummaryType = webSummaryType
         self.reads, self.genes, self.saturations, self.current_sat, self.sampname, self.current_median_genes, \
         self.current_mean_reads = webSum_model.scrape_saturation_stats(web_summary_html_file)
         self.seqSatModel = None
@@ -27,45 +50,77 @@ class webSum_model:
 
     @staticmethod
     def mm(x, a, b):
-        # Gene saturation and fragment saturation curve.
-        # a is the "kd"
-        # b is the max genes per cell, or fraction saturation
-        # here b=1
+        """
+        Michaelis menten model.
+        Args:
+            x: reads per cell
+            a: a is the "kd"
+            b: b is the max genes per cell
+
+        Returns:
+            Michaelis-menten model.
+        """
         return (b * x / (x + a))
 
     @staticmethod
     def mm_sat(x, a):
+        """
+        Michaelis-menten model where b=1 (sequencing saturation will range from 0-1).
+        Args:
+            x: reads per cell
+            a: a is the "kd"
+
+        Returns:
+            Michaelis-menten model for sequencing saturation.
+        """
         return (x / (x + a))
 
     @staticmethod
     def lw(N, X):
+        """
+        Lander-waterman equation for sequencing saturation.
+        Args:
+            N: number of read pairs
+            X: number of distinct molecules in library
+
+        Returns:
+            Lander-waterman equation.
+        """
         return (1 - (1 - np.exp((-N / X))) * (X / N))
 
     # reference: https://stackoverflow.com/questions/22277982/how-to-find-50-point-after-curve-fitting-using-numpy
     @staticmethod
     def lw2(N, X, y0=0):
+        """
+
+        Args:
+            N: number of read pairs
+            X: number of distinct molecules in library
+            y0: offset to calculate for sequencing saturation. (0.5 for half saturation)
+
+        Returns:
+            Lander-waterman equation for solution of y0 offset.
+        """
         return (1 - (1 - np.exp((-N / X))) * (X / N) + y0)
 
     @staticmethod
     def scrape_saturation_stats(web_summary_html_file):
         """
-            Scrape saturation stats from web_summary.html produced by 10x Cellranger.
-            Only works with Cellranger version 3.x and up.
-            Args:
-                web_summary_html_file (string): web_summary.html file to scrape.
-                webSummaryType (string): either 'GEX' or 'ARC' based on Cellranger pipeline used
+        Scrape saturation stats from web_summary.html produced by 10x Cellranger.
+        Only works with Cellranger version 3.x and up.
+        Args:
+            web_summary_html_file (string): web_summary.html file to scrape.
 
-            Returns:
-                list of int: The number of reads for each point of seq_saturation_plot.
-                list of int: The number of genes for each point of median_gene_plot.
-                list of int: The sequencing saturation for each point of seq_saturation_plot.
-                string: The sequencing saturation percent for that sample.
-                string: The sample name.
+        Returns:
+            list of int: The number of reads for each point of seq_saturation_plot.
+            list of int: The number of genes for each point of median_gene_plot.
+            list of int: The sequencing saturation for each point of seq_saturation_plot.
+            string: The sequencing saturation percent for that sample.
+            string: The sample name.
 
-            Raises:
-                KeyError: when attributes in specified web sumamry html file does not match
-                          the supplied format.
-                ValueError: when neither 'GEX' nor 'ARC' is supplied.
+        Raises:
+            KeyError: when attributes in specified web summary html file does not match
+                      the supplied format.
 
         """
         f = open(web_summary_html_file, encoding="utf8")
@@ -106,6 +161,12 @@ class webSum_model:
 
 
     def fit_model(self, seqSatModel='lw', verbose=True):
+        """
+        Fit lander-waterman model or michaelis-menten model with given reads and saturations
+        Args:
+            seqSatModel: either 'lw' for lander-waterman model or 'mm' for michaelis-menten model.
+            verbose: bool, whether to print information for user.
+        """
         self.seqSatModel = seqSatModel
         #webSum_model.__scrape_saturation_stats(self)
         print('Model being used for sequencing  saturation is: ', seqSatModel)
@@ -158,20 +219,13 @@ class webSum_model:
 
         Args:
             web_summary_html_file (string): web_summary.html file to scrape.
-            webSummaryType (string): either 'GEX' or 'ARC' based on Cellranger pipeline used
-            seqSatModel (string): either 'lw' for lander-waterman fit or 'mm' for michaelis menten fit
             readMax (int): The limit of the plot.
-            title (string): The title  of the plot.
-            readsDesired (int): Mean reads/cell desired.
-            readPairsDesired (int): Mean read pairs/cell desired (for atac portion).
-            verbose (boolean): True to print information pertaining to plots.
-
-        Returns:
-            df (pandas DataFrame): DataFrame containing sample information and michaelis
-            menten fit predictions.
+            reads_test (arr): array for read values to test model against.
+            saturations_test (arr): array of saturation values to test model against.
+            genes_test (arr): array of gene values to test model against.
 
         Raises:
-            ValueError: when neither 'GEX' nor 'ARC' is supplied.
+            ValueError: when neither 'lw' or 'mm' is provided.
         """
         fit_attributes = [self.popt_saturation, self.pcov_saturation, self.popt_genes, self.pcov_genes]
         if all(v is None for v in fit_attributes):
@@ -274,6 +328,14 @@ class webSum_model:
             fig.tight_layout()
 
     def predict_seq_saturation(self, reads_test):
+        """
+        Use model to fit test read values.
+        Args:
+            reads_test (arr): read values to test model against
+
+        Returns:
+            int: predicted read values for given read values.
+        """
         # ensure that model has been fit first
         fit_attributes = [self.popt_saturation, self.pcov_saturation, self.popt_genes, self.pcov_genes]
         if all(v is None for v in fit_attributes):
@@ -292,6 +354,16 @@ class webSum_model:
             raise ValueError('seqSatModel must be either \'lw\' for lander-waterman or \'mm\' for michaelis-menten')
 
     def score_seq_saturation(self, reads_test, seq_saturation_test):
+        """
+        Calculates Rsquared value of the sequencing saturation model fit given read and saturations test data.
+        Args:
+            reads_test (arr): array of reads to test model against.
+            seq_saturation_test (arr): array of seq saturations to test model against.
+
+        Returns:
+            float: Rsquared value.
+
+        """
         # ensure that model has been fit first
         fit_attributes = [self.popt_saturation, self.pcov_saturation, self.popt_genes, self.pcov_genes]
         if all(v is None for v in fit_attributes):
@@ -314,6 +386,14 @@ class webSum_model:
         return Rsquared
 
     def predict_genes(self, reads_test):
+        """
+
+        Args:
+            reads_test (arr): array of reads to test model against.
+
+        Returns:
+            int: predicted gene values for given read values.
+        """
         # ensure that model has been fit first
         fit_attributes = [self.popt_saturation, self.pcov_saturation, self.popt_genes, self.pcov_genes]
         if all(v is None for v in fit_attributes):
@@ -324,6 +404,15 @@ class webSum_model:
         return gene_predictions
 
     def score_genes(self, reads_test, genes_test):
+        """
+        Calculates Rsquared value of the gene model fit given read and genes test data.
+        Args:
+            reads_test (arr): array of reads to test model against.
+            genes_test (arr): array of genes to test model against.
+
+        Returns:
+            float: Rsquared value.
+        """
         # ensure that model has been fit first
         fit_attributes = [self.popt_saturation, self.pcov_saturation, self.popt_genes, self.pcov_genes]
         if all(v is None for v in fit_attributes):
@@ -339,7 +428,15 @@ class webSum_model:
         print('RSS: {}  ymean: {}  TSS: {}  Rsquared: {}'.format(RSS, ymean, TSS, Rsquared))
         return Rsquared
 
-def get_reads_genes_sats_from_web(web_summary_html):
+def get_reads_sats_genes_from_web(web_summary_html):
+    """
+    Scrape read, genes, and saturations arrays/lists from web_summary.html file.
+    Args:
+        web_summary_html (string): path to the web_summary file to be scraped.
+
+    Returns:
+        tuple: containing reads, saturations, and genes
+    """
     reads, genes, saturations, current_sat, sampname, current_median_genes, current_mean_reads = \
         webSum_model.scrape_saturation_stats(web_summary_html)
     return reads, saturations, genes

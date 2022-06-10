@@ -10,6 +10,23 @@ import os
 
 
 class UMI_model:
+    """Class that contains UMIs per cell versus reads per cell model. Based on michaelis-menten equation.
+
+    Attributes:
+        jsonPath (str): path to 10x CellRanger count metrics summary json file
+        UMI_dictionary (dict): dictionary of reads and corresponding UMI amounts
+        sample_id (str): array of genes corresponding to 10x CellRanger count genes plot
+        current_UMIs (str): current UMIs of sample
+        current_reads_per_cell (str): current reads per cell of sample
+        reads (array_like): array of reads for sample
+        UMIs (array_like): array of UMIs for given reads of sample.
+        halfsat_reads_per_cell (int): estimated reads per cell for half saturation of UMIs
+        halfsat_UMI_counts (int): estimated UMIs per cell for half saturation of UMIs
+        ymax_UMIs (int): max number of UMIs per cell based on model
+        popt (array): optimal values for the parameters so that the ssr of UMIs function is minimized
+        pcov (2d array): the estimated covariance of popt
+
+    """
     def __init__(self, jsonPath):
         self.jsonPath = jsonPath
         self.UMI_dictionary, self.sample_id, \
@@ -116,15 +133,27 @@ class UMI_model:
 
     @staticmethod
     def f(x, a, b):
-        # UMI saturation curve. b is vmax (max umis)
-        # a is km the michaelis menten constant, reads per cell at half vmax
-        # [reads, UMIs]
-        # better way to optimize it. Might break with low seq depth (2 mill reads)
-        # KC's myseq, or JG, DTPark
+        """
+        Michaelis menten model.
+        Args:
+            x: reads per cell
+            a: a is the "kd"
+            b: b is the max UMIs per cell
+
+        Returns:
+            Michaelis-menten model.
+
+        """
         return (b * x / (x + a))
 
 
     def fit_UMIs(self, verbose=True):
+        """
+        Fit michaelis-menten model with given reads and UMIs
+        Args:
+            verbose: bool, whether to print information for user.
+        """
+
         self.popt, self.pcov = curve_fit(UMI_model.f, self.reads, self.UMIs, p0=[22000, 1000])
         self.halfsat_reads_per_cell = np.round(self.popt[0], 0).astype('int')
         self.ymax_UMIs = np.round(self.popt[1], 0).astype('int')
@@ -141,20 +170,22 @@ class UMI_model:
 
     def plot_UMIs(self, readMax=80000, reads_test=None, UMIs_test=None):
         """
-            Plot Unique UMIs detected per cell versus reads per cell.
+        Plot Unique UMIs detected per cell versus reads per cell.
 
-            Plot UMIs versus reads graph and provide dataframe with prediction of UMIs
-            per cell given a specified number of reads.
+        Plot UMIs versus reads graph and provide dataframe with prediction of UMIs
+        per cell given a specified number of reads.
 
-            Args:
-                jsonPath (string): path to metrics_summary_json.json file.
-                readMax (int): length of the plot.
-                readsDesired: number of reads to predict UMIs per cell.
+        Args:
+            readMax (int): length of the plot.
+            readsDesired: number of reads to predict UMIs per cell.
+            reads_test (array_like): array for read values to test model against.
+            UMIs_test (array_like): array of UMI values to test model against.
 
-            Returns:
-                None
-            Raises:
-                Exception: description
+        Returns:
+            None
+
+        Raises:
+            AttributeError: run fit_UMIs() first to set necessary attributes
 
         """
         fit_attributes = [self.popt, self.pcov, self.halfsat_reads_per_cell, self.ymax_UMIs,
@@ -203,6 +234,18 @@ class UMI_model:
 
 
     def make_UMI_table(self, readsDesired=40000):
+        """
+        Make table of UMI predictions and other key attributes.
+        Args:
+            readsDesired (int): number of reads to predict number of UMIs for.
+
+        Returns:
+            dataframe of prediction and other UMI_model attributes.
+
+        Raises:
+            AttributeError: run fit_UMIs() first to set necessary attributes
+
+        """
         fit_attributes = [self.popt, self.pcov, self.halfsat_reads_per_cell, self.ymax_UMIs,
                           self.halfsat_UMI_counts]
         if all(v is None for v in fit_attributes):
@@ -225,6 +268,18 @@ class UMI_model:
 
 
     def predict(self, reads_test):
+        """
+        Predict UMIs for an array of test read values.
+        Args:
+            reads_test (array_like): array of reads values to predict UMIs from
+
+        Returns:
+            array of predicterd UMIs for given read values
+
+        Raises:
+            AttributeError: run fit_UMIs() first to set necessary attributes
+
+        """
         # ensure that model has been fit first
         fit_attributes = [self.popt, self.pcov, self.halfsat_reads_per_cell, self.ymax_UMIs,
                           self.halfsat_UMI_counts]
@@ -236,6 +291,19 @@ class UMI_model:
         return UMI_predictions
 
     def score(self, reads_test, UMIs_test):
+        """
+        Score UMI predictions by comparing with actual UMI test values using Rsquared.
+
+        Args:
+            reads_test (array_like): array of reads values to predict UMIs from
+            UMIs_test (array_like): array of UMI values to test predicted UMI values.
+
+        Returns:
+            Rsquared value for the goodness of model fit
+
+        Raises:
+            AttributeError: run fit_UMIs() first to set necessary attributes
+        """
         # ensure that model has been fit first
         fit_attributes = [self.popt, self.pcov, self.halfsat_reads_per_cell, self.ymax_UMIs,
                           self.halfsat_UMI_counts]
@@ -254,6 +322,18 @@ class UMI_model:
 
 
 def get_reads_and_UMIs_from_json(jsonPath):
+    """
+    Scrape information relating to UMI of a sample's metrics summary json file (reads and UMIs only).
+    Currently only tested on Cellranger 6.0.0+ metrics_summary_json.json files.
+
+    Args:
+        jsonPath (string): path to metrics_summary_json.json file
+
+    Returns:
+        array of reads from jsonPath produced from CellRanger count
+        array of UMIs from jsonPath produced from CellRanger count
+
+    """
     UMI_dict_abbr, sample_id, current_UMIs, current_reads_per_cell = UMI_model.scrapeUMIinfo(jsonPath)
     reads = np.sort(np.array(list(UMI_dict_abbr.keys())).astype(float))
     UMIs = [UMI_dict_abbr[str(int(key))] for key in reads]
@@ -271,9 +351,6 @@ def aggr_UMI_table(jsonPathList, readsDesired=40000, verbose=False):
 
     Returns:
         sample_df (pandas DataFrame): DataFrame containing UMI numbers for each sample.
-
-    Raises:
-        Exception: description
 
     """
 

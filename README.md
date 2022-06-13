@@ -1,20 +1,22 @@
 ## Overview
 Creates halfsat curves as reference for additional sequencing. Scrapes web_summary.html
-to obtain reference information for different tables. The package contains two main files,
-'metrics', 'predictUMIs', and 'webSum_10x_halfsat'
+and metrics_summary_json.json files that are outputted from 10x Genomics' CellRanger count
+platform to obtain reference information. The package contains two main modules, 'metrics', 
+'predictUMIs', and 'webSum_10x_halfsat'.
 
 **metrics** will scrape a list of web_summary files for all relevant information depending on
 the table-type provided: full, delivery doc, or repooling. Repooling allows for the
 additional parameter of 'readsDesired', which is used in the repooling calculation.
 
 **predictUMIs** will take in a metrics_summary_json.json file and output UMIs/cell predictions
-and half-saturation based a michaelis menten curve fit. 
+by fitting data to the michaelis-menten model. Can plot new data on the model fit and estimate
+the goodness of fit with test data.
 
 **webSum_10x_halfSat** will take in a web_summary.html file and output half-saturation plots
-and relevant information such as sequencing saturation half-sat point, current sequencing
-saturation level, current reads per cell, and current genes per cell. Additionally, the
-user can input the desired reads per cell for the samples and see the corresponding
-sequencing saturation and unique genes per cell based on the curves generated.
+and relevant information from the web_summary file. Can predict sequencing saturation and
+median genes/cell prediction based on reads/cell by fitting data to either the michaelis-menten
+equation or lander-waterman equation. Can plot new data on the model fit and estimate
+the goodness of fit with test data.
 
 ## Installation
 ### 1. Create a new directory and clone repository

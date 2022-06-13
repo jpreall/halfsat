@@ -63,7 +63,7 @@ metrics.tableGenerator(web_summary_list, 'repooling', readsDesired=120000)
 
 
 ### 2. predictUMIs
-#### Plot UMIs versus reads graph and provide dataframe with prediction of UMIs per cell given a specified number of reads.
+#### Build a UMI_model object with various attributes scraped from the 10x json file
 ```
 # metrics_summary_json was generated from 10x's public 500_PBMC_3p_LT_Chromium_X dataset
 # build UMI_model first
@@ -73,8 +73,8 @@ my_UMI_model.current_reads_per_cell, my_UMI_model.current_UMIs
 ```
 Out: (128910.867120954, 8935.0)
 
+#### Scrape reads and UMI information from the json file exclusively
 ```
-# we can also scrape reads and UMIs from the json file
 my_UMI_model_reads, my_UMI_model_UMIs = predictUMIs.get_reads_and_UMIs_from_json(metrics_json)
 print('reads: ', my_UMI_model_reads) 
 print('UMIs: ', my_UMI_model_UMIs)
@@ -83,8 +83,9 @@ reads:  [5000.  10000.  12891.  20000.  25782.  30000.  38673.  50000.  51564. 6
 
 UMIs:  [1596.0, 2827.0, 3380.0, 4551.0, 5253.0, 5705.0, 6388.0, 7049.0, 7128.0, 7638.0, 8021.0, 8287.0, 8552.0, 8731.0, 8935.0]
 
+
+#### fit UMI model with read and UMI data from json
 ```
-# fit UMI model with read and UMI data from json
 my_UMI_model.fit_UMIs()
 my_UMI_model.make_UMI_table()
 ```
@@ -95,7 +96,17 @@ my_UMI_model.plot_UMIs(readMax=200000)
 ```
 ![image](https://user-images.githubusercontent.com/70353129/173153262-8af7dc37-da84-4a5e-909d-b4e5d41a37ee.png)
 
+#### Plot new data on a model's plot
+```
+my_UMI_model2.plot_UMIs(reads_test=test_array_reads, UMIs_test=test_array_saturations)
+```
+<img width="401" alt="image" src="https://user-images.githubusercontent.com/70353129/173390201-deb4f134-f19d-466f-b922-52851a40cead.png">
 
+#### Predict UMI values based on model and determine the goodness of fit
+```
+my_UMI_model.predict(test_array_reads)
+my_UMI_model.score(test_array_reads, test_array_saturations)
+```
 
 ### 3. webSum_10x_halfSat
 #### We can look at the saturation curves for our samples and extrapolate sequencing saturation and median reads per cell for a given number of reads per cell (To be updated)

@@ -133,8 +133,15 @@ Brain_3p.score_genes(reads_test, genes_test)
 ```
 Out: [350, 389, 524, 570, 682, 712, 756, 812, 816, 856, 888, 913, 923, 934, 953]
 
-Out: RSS: 50334.5  ymean: 2794.3333333333335  TSS: 10176173.833333332  Rsquared: 0.9950536910213618
+Out: RSS: 50334.5  ymean: 2794.333  TSS: 10176173.833 Rsquared: 0.995
 
+```
+Brain_3p.predict_seq_saturation(reads_test)
+Brain_3p.score_seq_saturation(reads_test, sat_test)
+```
+Out: [0.1111, 0.129, 0.1999, 0.2285, 0.3076, 0.3332, 0.372, 0.4254, 0.4285, 0.4705, 0.509, 0.5423, 0.5554, 0.5713, 0.5969]
+
+Out: RSS: 0.004  ymean: 0.369  TSS: 0.370  Rsquared: 0.988
 
 ## Mathematical Background
 ### Halfsat using lander-waterman modeling

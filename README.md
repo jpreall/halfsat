@@ -1,20 +1,22 @@
 ## Overview
 Creates halfsat curves as reference for additional sequencing. Scrapes web_summary.html
-to obtain reference information for different tables. The package contains two main files,
-'metrics', 'predictUMIs', and 'webSum_10x_halfsat'
+and metrics_summary_json.json files that are outputted from 10x Genomics' CellRanger count
+platform to obtain reference information. The package contains two main modules, 'metrics', 
+'predictUMIs', and 'webSum_10x_halfsat'.
 
 **metrics** will scrape a list of web_summary files for all relevant information depending on
 the table-type provided: full, delivery doc, or repooling. Repooling allows for the
 additional parameter of 'readsDesired', which is used in the repooling calculation.
 
 **predictUMIs** will take in a metrics_summary_json.json file and output UMIs/cell predictions
-and half-saturation based a michaelis menten curve fit. 
+by fitting data to the michaelis-menten model. Can plot new data on the model fit and estimate
+the goodness of fit with test data.
 
 **webSum_10x_halfSat** will take in a web_summary.html file and output half-saturation plots
-and relevant information such as sequencing saturation half-sat point, current sequencing
-saturation level, current reads per cell, and current genes per cell. Additionally, the
-user can input the desired reads per cell for the samples and see the corresponding
-sequencing saturation and unique genes per cell based on the curves generated.
+and relevant information from the web_summary file. Can predict sequencing saturation and
+median genes/cell prediction based on reads/cell by fitting data to either the michaelis-menten
+equation or lander-waterman equation. Can plot new data on the model fit and estimate
+the goodness of fit with test data.
 
 ## Installation
 ### 1. Create a new directory and clone repository
@@ -63,7 +65,7 @@ metrics.tableGenerator(web_summary_list, 'repooling', readsDesired=120000)
 
 
 ### 2. predictUMIs
-#### Plot UMIs versus reads graph and provide dataframe with prediction of UMIs per cell given a specified number of reads.
+#### Build a UMI_model object with various attributes scraped from the 10x json file
 ```
 # metrics_summary_json was generated from 10x's public 500_PBMC_3p_LT_Chromium_X dataset
 # build UMI_model first
@@ -73,8 +75,8 @@ my_UMI_model.current_reads_per_cell, my_UMI_model.current_UMIs
 ```
 Out: (128910.867120954, 8935.0)
 
+#### Scrape reads and UMI information from the json file exclusively
 ```
-# we can also scrape reads and UMIs from the json file
 my_UMI_model_reads, my_UMI_model_UMIs = predictUMIs.get_reads_and_UMIs_from_json(metrics_json)
 print('reads: ', my_UMI_model_reads) 
 print('UMIs: ', my_UMI_model_UMIs)
@@ -83,8 +85,9 @@ reads:  [5000.  10000.  12891.  20000.  25782.  30000.  38673.  50000.  51564. 6
 
 UMIs:  [1596.0, 2827.0, 3380.0, 4551.0, 5253.0, 5705.0, 6388.0, 7049.0, 7128.0, 7638.0, 8021.0, 8287.0, 8552.0, 8731.0, 8935.0]
 
+
+#### fit UMI model with read and UMI data from json
 ```
-# fit UMI model with read and UMI data from json
 my_UMI_model.fit_UMIs()
 my_UMI_model.make_UMI_table()
 ```
@@ -95,11 +98,52 @@ my_UMI_model.plot_UMIs(readMax=200000)
 ```
 ![image](https://user-images.githubusercontent.com/70353129/173153262-8af7dc37-da84-4a5e-909d-b4e5d41a37ee.png)
 
+#### Plot new data on a model's plot
+```
+my_UMI_model2.plot_UMIs(reads_test=test_array_reads, UMIs_test=test_array_saturations)
+```
+<img width="401" alt="image" src="https://user-images.githubusercontent.com/70353129/173390201-deb4f134-f19d-466f-b922-52851a40cead.png">
 
+#### Predict UMI values based on model and determine the goodness of fit
+```
+my_UMI_model.predict(test_array_reads)
+my_UMI_model.score(test_array_reads, test_array_saturations)
+```
 
 ### 3. webSum_10x_halfSat
-#### We can look at the saturation curves for our samples and extrapolate sequencing saturation and median reads per cell for a given number of reads per cell (To be updated)
+#### Build web summary model
+```
+Brain_3p = webSum_10x_halfSat.webSum_model(web_summary_list[0])
+```
 
+#### Scrape reads, saturations, and genes information from web summary test file exclusively
+```
+reads_test, sat_test, genes_test = webSum_10x_halfSat.get_reads_sats_genes_from_web(web_summary[1])
+```
+
+#### Fit model and plot train and test data on it
+```
+Brain_3p.fit_model(seqSatModel='mm')
+Brain_3p.plot(readMax=250000, reads_test=reads_test, saturations_test=sat_test, genes_test=genes_test)
+```
+<img width="725" alt="image" src="https://user-images.githubusercontent.com/70353129/173396430-443b5631-2ab3-4ce9-9a21-b78d5c0d378a.png">
+
+#### Use models for prediction and test the goodness of fit
+```
+Brain_3p.predict_genes(genes_test)
+Brain_3p.score_genes(reads_test, genes_test)
+```
+Out: [350, 389, 524, 570, 682, 712, 756, 812, 816, 856, 888, 913, 923, 934, 953]
+
+Out: RSS: 50334.5  ymean: 2794.333  TSS: 10176173.833 Rsquared: 0.995
+
+```
+Brain_3p.predict_seq_saturation(reads_test)
+Brain_3p.score_seq_saturation(reads_test, sat_test)
+```
+Out: [0.1111, 0.129, 0.1999, 0.2285, 0.3076, 0.3332, 0.372, 0.4254, 0.4285, 0.4705, 0.509, 0.5423, 0.5554, 0.5713, 0.5969]
+
+Out: RSS: 0.004  ymean: 0.369  TSS: 0.370  Rsquared: 0.988
 
 ## Mathematical Background
 ### Halfsat using lander-waterman modeling

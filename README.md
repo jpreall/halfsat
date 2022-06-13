@@ -109,7 +109,31 @@ my_UMI_model.score(test_array_reads, test_array_saturations)
 ```
 
 ### 3. webSum_10x_halfSat
-#### We can look at the saturation curves for our samples and extrapolate sequencing saturation and median reads per cell for a given number of reads per cell (To be updated)
+#### Build web summary model
+```
+Brain_3p = webSum_10x_halfSat.webSum_model(web_summary_list[0])
+```
+
+#### Scrape reads, saturations, and genes information from web summary test file exclusively
+```
+reads_test, sat_test, genes_test = webSum_10x_halfSat.get_reads_sats_genes_from_web(web_summary[1])
+```
+
+#### Fit model and plot train and test data on it
+```
+Brain_3p.fit_model(seqSatModel='mm')
+Brain_3p.plot(readMax=250000, reads_test=reads_test, saturations_test=sat_test, genes_test=genes_test)
+```
+<img width="725" alt="image" src="https://user-images.githubusercontent.com/70353129/173396430-443b5631-2ab3-4ce9-9a21-b78d5c0d378a.png">
+
+#### Use models for prediction and test the goodness of fit
+```
+Brain_3p.predict_genes(genes_test)
+Brain_3p.score_genes(reads_test, genes_test)
+```
+Out: [350, 389, 524, 570, 682, 712, 756, 812, 816, 856, 888, 913, 923, 934, 953]
+
+Out: RSS: 50334.5  ymean: 2794.3333333333335  TSS: 10176173.833333332  Rsquared: 0.9950536910213618
 
 
 ## Mathematical Background

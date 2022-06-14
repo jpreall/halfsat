@@ -24,7 +24,7 @@ the goodness of fit with test data.
 ### 1. Create a new directory and clone repository
 ```
 (your_env) $ git clone https://github.com/jpreall/halfsat.git
-(your_env) $ pip install -e halfsat
+(your_env) $ pip install halfsat
 ```
 
 ## Example
@@ -35,6 +35,8 @@ web_summary_list = ['Brain_3p_web_summary.html',
                     'Brain_3p_LT_web_summary.html',
                     'Breast_Cancer_3p_LT_web_summary.html']
 web_summary_arc = 'human_brain_3k_web_summary.html'
+# generated from 10x's public 500_PBMC_3p_LT_Chromium_X dataset
+metrics_summary_json = 'metrics_summary_json.json'
 ```
 
 ### 1. metrics
@@ -71,7 +73,7 @@ metrics.tableGenerator(web_summary_list, 'repooling', readsDesired=120000)
 ```
 # metrics_summary_json was generated from 10x's public 500_PBMC_3p_LT_Chromium_X dataset
 # build UMI_model first
-my_UMI_model = predictUMIs.UMI_model(metrics_json)
+my_UMI_model = predictUMIs.UMI_model(metrics_summary_json)
 # check out the model attributes
 my_UMI_model.current_reads_per_cell, my_UMI_model.current_UMIs
 ```
@@ -79,7 +81,7 @@ Out: (128910.867120954, 8935.0)
 
 #### Scrape reads and UMI information from the json file exclusively
 ```
-my_UMI_model_reads, my_UMI_model_UMIs = predictUMIs.get_reads_and_UMIs_from_json(metrics_json)
+my_UMI_model_reads, my_UMI_model_UMIs = predictUMIs.get_reads_and_UMIs_from_json(metrics_summary_json)
 print('reads: ', my_UMI_model_reads) 
 print('UMIs: ', my_UMI_model_UMIs)
 ```
@@ -120,7 +122,7 @@ Brain_3p = webSum_10x_halfSat.webSum_model(web_summary_list[0])
 
 #### Scrape reads, saturations, and genes information from web summary test file exclusively
 ```
-reads_test, sat_test, genes_test = webSum_10x_halfSat.get_reads_sats_genes_from_web(web_summary[1])
+reads_test, sat_test, genes_test = webSum_10x_halfSat.get_reads_sats_genes_from_web(web_summary_list[1])
 ```
 
 #### Fit model and plot train and test data on it

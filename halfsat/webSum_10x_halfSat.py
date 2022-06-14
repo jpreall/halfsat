@@ -200,7 +200,7 @@ class webSum_model:
             print('')
             print('Here is the information pertaining to the sequencing saturation model:')
             print('reads from web_summary path: ', self.reads)
-            print('UMIs from web_summary path: ', self.saturations)
+            print('saturations from web_summary path: ', self.saturations)
             print('popt_saturation: {} and pcov_saturation: {}'.format(self.popt_saturation, self.pcov_saturation))
             print('halfsat_reads_per_cell: {}  ymax_sat: {}  halfsat_saturation: {}'.format(
                 self.halfsat_sat_reads_per_cell, ymax_sat, 0.5))

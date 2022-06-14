@@ -1,3 +1,5 @@
+[![Documentation Status](https://readthedocs.org/projects/halfsat/badge/?version=latest)](https://halfsat.readthedocs.io/en/latest/?badge=latest)
+
 ## Overview
 Creates halfsat curves as reference for additional sequencing. Scrapes web_summary.html
 and metrics_summary_json.json files that are outputted from 10x Genomics' CellRanger count
